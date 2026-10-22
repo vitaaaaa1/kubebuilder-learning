@@ -7,3 +7,4 @@ metadata:
   name: helloworld-sample
 spec:
   # TODO(user): Add fields here
+  fooAlpha: "I am from v1alpha1"

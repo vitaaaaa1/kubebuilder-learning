@@ -39,7 +39,7 @@ spec:
           spec:
             description: spec defines the desired state of HelloWorld
             properties:
-              foo:
+              fooAlpha:
                 description: foo is an example field of HelloWorld. Edit helloworld_types.go
                   to remove/update
                 type: string
