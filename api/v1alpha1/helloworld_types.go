@@ -70,7 +70,9 @@ type HelloWorldStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:shortName=hw,categories=all
+
+// +kubebuilder:resource:shortName=hw
+// +kubebuilder:resource:categories=all
 
 // HelloWorld is the Schema for the helloworlds API
 // +kubebuilder:printcolumn:name="Message",type=string,JSONPath=.spec.message01

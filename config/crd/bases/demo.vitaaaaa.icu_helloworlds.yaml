@@ -13,8 +13,6 @@ spec:
     kind: HelloWorld
     listKind: HelloWorldList
     plural: helloworlds
-    shortNames:
-    - hw
     singular: helloworld
   scope: Namespaced
   versions:
@@ -153,5 +151,4 @@ spec:
         type: object
     served: true
     storage: true
-    subresources:
-      status: {}
+    subresources: {}

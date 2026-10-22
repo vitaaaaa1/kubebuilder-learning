@@ -87,15 +87,12 @@ make install    # 必须更新集群中的 CRD，否则 kubectl get 不会显示
 
 让自定义资源（CRD）像 Kubernetes 内置资源（如 `pod`、`svc`）一样便于使用。
 
-**为什么需要：** 减少命令行输入长度；让资源能够被 `kubectl get all` 统一管理。
-
 #### 标记格式：
-
 在结构体上方添加注释（注意：必须使用 `resource:` 前缀）：
 
 ```go
 // +kubebuilder:resource:shortName=hw
-// +kubebuilder:resource:categories=all
+// +kubebuilder:resource:categories=my-platform
 type HelloWorld struct { ... }
 ```
 
@@ -106,10 +103,13 @@ type HelloWorld struct { ... }
 - 效果：可以使用 `kubectl get hw` 代替完整的 `kubectl get helloworlds.demo.vitaaaaa.icu`。
 - *注意：如果有多个短名称，需要写多行。*
 
-**`+kubebuilder:resource:categories=all`**
+**`+kubebuilder:resource:categories=xxx`**
 - 将资源归入某个类别。
-- `all` 是最常用的类别，包含 Kubernetes 内置的核心资源（Pod, Service, Deployment 等）。
-- 效果：执行 `kubectl get all` 时会显示你的 CRD。
+- **关于 `all` 的“隐藏规则”**：即使设置了 `categories=all`，`kubectl get all` 通常**仍然不会显示**自定义资源。这是 `kubectl` 为了保持终端整洁的默认保护机制。
+- **真正的强大之处**：创建**自定义资源组**。如果你定义了多个 CRD（如 `HelloWorld`, `MyApp`, `Database`），给它们都加上相同的分类（如 `my-platform`），你就可以用一行命令查出所有相关资源：
+  ```bash
+  kubectl get my-platform -n test
+  ```
 
 #### 生成的 CRD YAML 变化：
 
@@ -121,7 +121,7 @@ spec:
     shortNames:
     - hw        # ← 由 +kubebuilder:resource:shortName=hw 生成
     categories:
-    - all       # ← 由 +kubebuilder:resource:categories=all 生成
+    - my-platform # ← 由 +kubebuilder:resource:categories=my-platform 生成
 ```
 
 #### 更新步骤：
@@ -132,8 +132,8 @@ kubectl apply -f config/crd/bases/demo.vitaaaaa.icu_helloworlds.yaml # 必须更
 # 测试短名称
 kubectl get hw -n test
 
-# 测试类别（应包含 HelloWorld）
-kubectl get all -n test
+# 测试自定义类别（应包含所有标记为 my-platform 的 CRD）
+kubectl get my-platform -n test
 ```
 
 ---
