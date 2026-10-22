@@ -1,0 +1,290 @@
+# CustomResourceDefinition (CRD) 详细注释
+# 此文件由 controller-gen 从 api/v1alpha1/helloworld_types.go 自动生成
+#
+# 完整映射流程：
+# Go 结构体定义 → controller-gen 扫描 → OpenAPI v3 Schema → CRD YAML
+---
+# apiVersion: CRD 自身的 API 版本（固定值）
+# 来源：Kubernetes 内置的 CRD API 版本
+apiVersion: apiextensions.k8s.io/v1
+
+# kind: CRD 的资源类型（固定值）
+kind: CustomResourceDefinition
+
+metadata:
+  # annotations: controller-gen 自动添加的元信息
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.22.0
+
+  # name: CRD 的全局唯一名称
+  # 来源：{plural kind}.{group}.{domain}
+  # - helloworlds = HelloWorld 的小写复数形式
+  # - demo = --group 参数
+  # - vitaaaaa.icu = --domain 参数
+  name: helloworlds.demo.vitaaaaa.icu
+
+spec:
+  # group: API group，决定 CRD 的访问路径
+  # 来源：api/v1alpha1/groupversion_info.go 中的 GroupName
+  # - demo = kubebuilder create api --group demo
+  # - vitaaaaa.icu = kubebuilder init --domain vitaaaaa.icu
+  group: demo.vitaaaaa.icu
+
+  # names: CRD 的各种名称
+  names:
+    # kind: 资源类型名，用户创建 CR 时使用
+    # 来源：type HelloWorld struct
+    kind: HelloWorld
+
+    # listKind: 列表资源类型名
+    # 来源：HelloWorld + List
+    listKind: HelloWorldList
+
+    # plural: 复数形式，用于 API 路径
+    # 来源：kind 的小写 + s
+    # 例如：/apis/demo.vitaaaaa.icu/v1alpha1/helloworlds
+    plural: helloworlds
+
+    # singular: 单数形式，用于 kubectl
+    # 来源：kind 的小写
+    singular: helloworld
+
+  # scope: 资源的作用域
+  # Namespaced = 资源属于某个命名空间
+  # Cluster = 资源是集群级别的
+  # 来源：默认是 Namespaced，可通过注释修改
+  # // +kubebuilder:resource:scope=Cluster  ← 改成集群级别
+  scope: Namespaced
+
+  # versions: CRD 支持的版本列表
+  versions:
+  - name: v1alpha1
+    # name: 版本号
+    # 来源：包名 api/v1alpha1
+    # 常见版本：v1alpha1 (实验性) → v1beta1 (较稳定) → v1 (稳定)
+
+    schema:
+      openAPIV3Schema:
+        # description: CRD 的描述
+        # 来源：HelloWorld 结构体上方的注释
+        # // HelloWorld is the Schema for the helloworlds API
+        description: HelloWorld is the Schema for the helloworlds API
+
+        properties:
+          apiVersion:
+            # apiVersion: CR 实例的 API 版本
+            # 来源：metav1.TypeMeta（所有 Kubernetes 对象的标准字段）
+            # 用户创建的 CR 中此值为 "demo.vitaaaaa.icu/v1alpha1"
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+
+          kind:
+            # kind: CR 实例的资源类型
+            # 来源：metav1.TypeMeta
+            # 用户创建的 CR 中此值为 "HelloWorld"
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+
+          metadata:
+            # metadata: CR 实例的元数据（name, namespace, labels, annotations 等）
+            # 来源：metav1.ObjectMeta
+            # type HelloWorld struct { metav1.ObjectMeta `json:"metadata,omitzero"` }
+            type: object
+
+          spec:
+            # spec: 用户的期望状态（desired state）
+            # 来源：type HelloWorldSpec struct
+            # type HelloWorld struct { Spec HelloWorldSpec `json:"spec"` }
+            # 字段名 "spec" 来自 json tag
+            description: spec defines the desired state of HelloWorld
+
+            properties:
+              foo:
+                # foo: 示例字段
+                # 来源：Foo *string `json:"foo,omitempty"`
+                # description 来自字段上方的注释
+                # type: string 因为 Go 类型是 *string
+                # optional 因为有 omitempty（指针 + omitempty = optional）
+                description: foo is an example field of HelloWorld. Edit helloworld_types.go
+                  to remove/update
+                type: string
+
+              message01:
+                # message01: 用户定义的字段
+                # 来源：Message01 *string `json:"message01"`
+                # required 因为是指针类型但没有 omitempty
+                # 规则：Go 指针/非零值类型 + 无 omitempty = required
+                type: string
+
+              message02:
+                # message02: 用户定义的另一个字段
+                # 来源：Message02 *string `json:"message02"`
+                # 同上，required
+                type: string
+
+            # required: 必填字段列表
+            # 来源：没有 omitempty 的指针/非零值字段
+            # Message01 *string `json:"message01"` → required
+            # Message02 *string `json:"message02"` → required
+            # Foo *string `json:"foo,omitempty"` → NOT required (optional)
+            required:
+            - message01
+            - message02
+
+            type: object
+
+          status:
+            # status: 观察到的实际状态（observed state）
+            # 来源：type HelloWorldStatus struct
+            # type HelloWorld struct { Status HelloWorldStatus `json:"status,omitzero"` }
+            description: status defines the observed state of HelloWorld
+
+            properties:
+              conditions:
+                # conditions: Kubernetes 标准的条件列表
+                # 来源：Conditions []metav1.Condition `json:"conditions,omitempty"`
+                # 这是 Kubernetes API 规范推荐的标准模式
+                # 用于表达资源的当前状态（Available, Progressing, Degraded 等）
+                description: |-
+                  conditions represent the current state of the HelloWorld resource.
+                  Each condition has a unique type and reflects the status of a specific aspect of the resource.
+
+                  Standard condition types include:
+                  - "Available": the resource is fully functional
+                  - "Progressing": the resource is being created or updated
+                  - "Degraded": the resource failed to reach or maintain its desired state
+
+                  The status of each condition is one of True, False, or Unknown.
+
+                items:
+                  # items: 数组中每个元素的 schema
+                  # 来源：metav1.Condition 结构体
+                  # metav1.Condition 是 Kubernetes 内置的标准条件类型
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+
+                  properties:
+                    lastTransitionTime:
+                      # lastTransitionTime: 条件最后一次状态变化的时间
+                      # 来源：metav1.Condition.LastTransitionTime
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+
+                    message:
+                      # message: 状态变化的人类可读消息
+                      # 来源：metav1.Condition.Message
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+
+                    observedGeneration:
+                      # observedGeneration: 条件基于的 .metadata.generation 值
+                      # 来源：metav1.Condition.ObservedGeneration
+                      # 用于检测条件是否过期（generation 增加但条件未更新）
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+
+                    reason:
+                      # reason: 状态变化的程序化标识符
+                      # 来源：metav1.Condition.Reason
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+
+                    status:
+                      # status: 条件状态值
+                      # 来源：metav1.Condition.Status
+                      # 只能是 True, False, 或 Unknown
+                      # 来源：corev1.ConditionStatus 枚举
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+
+                    type:
+                      # type: 条件类型
+                      # 来源：metav1.Condition.Type
+                      # 常见类型：Available, Progressing, Degraded, Ready 等
+                      # pattern 验证格式是否符合 Kubernetes 标准
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+
+                  # Condition 的必填字段
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+
+                  type: object
+
+                type: array
+
+                # x-kubernetes-list-map-keys: 数组去重的键
+                # 来源：// +listMapKey=type 注释
+                # 表示每个 Condition 的 type 字段必须唯一
+                x-kubernetes-list-map-keys:
+                - type
+
+                # x-kubernetes-list-type: 数组类型
+                # 来源：// +listType=map 注释
+                # map 表示这是一个以某个字段为键的映射结构
+                x-kubernetes-list-type: map
+
+            type: object
+
+        # required: CR 的顶层必填字段
+        # spec 是 required 因为 HelloWorld.Spec 没有 omitempty
+        required:
+        - spec
+
+        type: object
+
+    # served: 此版本是否可以通过 API 访问
+    # true 表示用户可以通过 API 创建/读取/更新此版本的资源
+    served: true
+
+    # storage: 此版本是否是存储版本
+    # true 表示数据在 etcd 中以此版本存储
+    # 多版本时只能有一个 storage: true
+    storage: true
+
+    subresources:
+      # subresources.status: 启用 status 子资源
+      # 来源：// +kubebuilder:subresource:status 注释
+      # 作用：
+      # 1. 分离 spec 和 status 的更新权限
+      # 2. status 更新不会触发新的 reconcile（避免无限循环）
+      # 3. 用户可以通过 /status 端点更新 status
+      status: {}

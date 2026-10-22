@@ -33,9 +33,9 @@ type HelloWorldSpec struct {
 
 	// foo is an example field of HelloWorld. Edit helloworld_types.go to remove/update
 	// +optional
-	Foo       *string `json:"foo,omitempty"`
-	Message01 *string `json:"message"`
-	Message02 *string `json:"message"`
+	Foo       *string `json:"foo,omitempty"` // omitempty 是 Go encoding/json 包的一个标记，意思是"如果值是零值，则省略此字段"
+	Message01 *string `json:"message01,omitempty"`
+	Message02 *string `json:"message02,omitempty"`
 }
 
 // HelloWorldStatus defines the observed state of HelloWorld.

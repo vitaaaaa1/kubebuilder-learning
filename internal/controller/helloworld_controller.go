@@ -19,6 +19,8 @@ package controller
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -26,6 +28,8 @@ import (
 
 	demov1alpha1 "github.com/vitaaaaa/kubebuilder-learning/api/v1alpha1"
 )
+
+var logger = logf.Log.WithName("controller-helloWorld")
 
 // HelloWorldReconciler reconciles a HelloWorld object
 type HelloWorldReconciler struct {
@@ -50,8 +54,49 @@ func (r *HelloWorldReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	_ = logf.FromContext(ctx)
 
 	// TODO(user): your logic here
+	log := logger.WithValues("Request.Namepsace", req.Namespace, "Request.Name", req.Name)
+	log.Info("Reconcile Called")
 
+	// 1.
+	var helloWorld demov1alpha1.HelloWorld
+	err := r.Get(ctx, req.NamespacedName, &helloWorld)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	// 2. modify crd status
+	meta.SetStatusCondition(&helloWorld.Status.Conditions, metav1.Condition{
+		Type:               "Available",                    // 条件类型
+		Status:             metav1.ConditionTrue,           // 状态值
+		ObservedGeneration: helloWorld.Generation,          // 对应的版本号
+		Reason:             "TestingStatus",                // 原因
+		Message:            "I am testing status updates!", // 说明
+	})
+
+	// 3. update crd
+	err = r.Status().Update(ctx, &helloWorld)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	log.Info("Status updated successfully")
 	return ctrl.Result{}, nil
+
+	/*
+		 $  kubectl describe -n test helloworlds.demo.vitaaaaa.icu
+		Name:         helloworld-sample
+		...
+		Status:
+		  Conditions:
+			Last Transition Time:  2026-10-22T03:47:46Z
+			Message:               I am testing status updates!
+			Observed Generation:   1
+			Reason:                TestingStatus
+			Status:                True
+			Type:                  Available
+		Events:                    <none>
+
+	*/
 }
 
 // SetupWithManager sets up the controller with the Manager.
