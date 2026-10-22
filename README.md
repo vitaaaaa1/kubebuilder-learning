@@ -2,244 +2,138 @@
 
 本项目用于学习 Kubernetes Operator 开发，基于 [kubebuilder](https://book.kubebuilder.io/) 框架。
 
-## 项目信息
+---
 
-- **Domain**: `vitaaaaa.icu`
-- **Go Module**: `github.com/vitaaaaa/kubebuilder-learning`
-- **Kubebuilder Version**: 4.16.0
-- **Layout**: `go.kubebuilder.io/v4`
-- **Go Version**: 1.26.0
+## 专题一：CRD API 进阶定义与增强
 
-## 目录结构
+### 1.1 验证标记 (Validation Markers)
 
-```
-├── cmd/
-│   └── main.go              # 控制器入口，启动 manager
-├── config/                  # Kubernetes 资源配置（kustomize）
-│   ├── default/             # 默认 kustomize 配置
-│   ├── manager/             # Controller Deployment 配置
-│   ├── network-policy/      # 网络策略
-│   ├── prometheus/          # Prometheus 监控配置
-│   └── rbac/                # RBAC 角色和权限配置
-├── hack/                    # 辅助脚本
-├── test/                    # 测试代码
-├── PROJECT                  # kubebuilder 项目元数据（自动生成）
-├── Makefile                 # 构建、部署、测试命令
-├── Dockerfile               # 容器镜像构建文件
-├── go.mod                   # Go 依赖管理
-└── README.md                # 项目说明文档
-```
+验证标记位于 Go 结构体字段上方，`controller-gen` 会读取它们并生成 **OpenAPI v3 Schema** 写入 CRD。
 
-## 命令详解
+**为什么需要：** 防止用户输入非法数据，在提交阶段（`kubectl apply`）就拦截错误，避免无效的 Reconcile 循环。
 
-### kubebuilder init
+#### 常用标记：
 
-```bash
-kubebuilder init --domain vitaaaaa.icu --repo github.com/vitaaaaa/kubebuilder-learning
-```
+| 标记 | 说明 | 适用类型 | 示例 |
+|------|------|----------|------|
+| `+kubebuilder:validation:Enum` | 限制为枚举值之一 | 字符串/数字 | `// +kubebuilder:validation:Enum=Running;Stopped` |
+| `+kubebuilder:validation:Minimum` | 最小值（含边界） | 数字 | `// +kubebuilder:validation:Minimum=1` |
+| `+kubebuilder:validation:Maximum` | 最大值（含边界） | 数字 | `// +kubebuilder:validation:Maximum=100` |
+| `+kubebuilder:validation:MultipleOf` | 必须是某数的倍数 | 数字 | `// +kubebuilder:validation:MultipleOf=5` |
+| `+kubebuilder:validation:MinLength` | 字符串最小长度 | 字符串 | `// +kubebuilder:validation:MinLength=1` |
+| `+kubebuilder:validation:MaxLength` | 字符串最大长度 | 字符串 | `// +kubebuilder:validation:MaxLength=100` |
+| `+kubebuilder:validation:Pattern` | 正则表达式匹配 | 字符串 | `// +kubebuilder:validation:Pattern="^[a-z]+$"` |
 
-**参数解释：**
+#### 必填与选填：
+- 指针类型（`*string`）**不带** `omitempty` 即为必填。
+- 指针类型 **带** `omitempty` 即为选填。
 
-| 参数 | 值 | 作用 |
-|------|-----|------|
-| `--domain` | `vitaaaaa.icu` | 设置 API group 的基础域名 |
-| `--repo` | `github.com/vitaaaaa/kubebuilder-learning` | 设置 Go module 路径 |
+---
 
-**`--domain` 的作用：**
+### 1.2 打印列 (Printer Columns)
 
-将来创建 API 时，CRD 的完整 group 会是 `<group>.<domain>`。
+通过 `+kubebuilder:printcolumn` 标记，可以让 `kubectl get <crd-name>` 命令直接显示资源的关键业务信息，而不需要每次都 `kubectl describe` 或 `-o yaml`。
 
-比如创建了 `--group demo` 的 API，最终的 API group 就是：
-```yaml
-apiVersion: demo.vitaaaaa.icu/v1alpha1
-kind: HelloWorld
-```
+**为什么需要：** 极大提升日常运维和调试效率，一眼看清所有资源状态。
 
-**`--repo` 的作用：**
-
-- 设置 `go.mod` 中的 module 名称
-- 决定所有 import 路径的前缀
-- 通常与 Git 仓库路径一致
+#### 标记格式：
 
 ```go
-// import 路径示例
-import (
-    demoapiv1alpha1 "github.com/vitaaaaa/kubebuilder-learning/api/v1alpha1"
-)
+// +kubebuilder:printcolumn:name="列名",type=类型,JSONPath=路径,priority=优先级,description="描述"
 ```
 
-**init 做了什么？**
+#### 参数说明：
+- **name**: 列表表头显示的列名。
+- **type**: 数据类型（`string`, `integer`, `boolean`, `date`）。
+- **JSONPath**: 数据在 CR 实例 YAML 中的路径（如 `.spec.message`）。
+- **priority**: (可选) 默认为 0。大于 0 的列默认隐藏，需使用 `-o wide` 才显示。
 
-1. 生成 `PROJECT` 文件（记录项目元信息）
-2. 生成 `Makefile`（构建、部署命令）
-3. 生成 `go.mod`（Go module 配置）
-4. 生成 `cmd/main.go`（controller 入口）
-5. 生成 `config/` 目录（kustomize 配置）
-6. 生成 `Dockerfile`
-7. 初始化 Go 代码框架
+#### 示例：
+
+```go
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+
+// +kubebuilder:printcolumn:name="Message",type=string,JSONPath=.spec.message01
+// +kubebuilder:printcolumn:name="Status",type=string,JSONPath=.status.conditions[?(@.type=='Available')].status
+
+type HelloWorld struct { ... }
+```
+
+#### JSONPath 进阶：
+- `.spec.message01`: 提取 Spec 下的字段。
+- `.status.conditions[?(@.type=='Available')].status`: 复杂的查询。表示从 conditions 数组中找到 type 为 `Available` 的那一项，并取其 status 字段。
+
+#### 隐藏列（Priority）：
+如果你定义的列太多，表格会变得很长。可以通过设置 `priority`（默认为 0）来控制列的显示。
+- **priority=0**：默认显示。
+- **priority=1**：隐藏，只有在使用 `-o wide` 时才会显示。
+
+```go
+// +kubebuilder:printcolumn:name="HiddenField",type=string,JSONPath=.spec.foo,priority=1
+```
+
+这在显示“详细描述”、“内部 ID”等次要字段时非常有用，可以保持默认输出的简洁。
+
+#### 更新步骤：
+```bash
+make manifests  # 重新生成 CRD YAML（会更新 additionalPrinterColumns 部分）
+make install    # 必须更新集群中的 CRD，否则 kubectl get 不会显示新列
+```
 
 ---
 
-### kubebuilder create api
+### 1.3 简写与分类 (ShortNames & Categories)
 
-```bash
-kubebuilder create api --group demo --version v1alpha1 --kind HelloWorld
+让自定义资源（CRD）像 Kubernetes 内置资源（如 `pod`、`svc`）一样便于使用。
+
+**为什么需要：** 减少命令行输入长度；让资源能够被 `kubectl get all` 统一管理。
+
+#### 标记格式：
+
+在结构体上方添加注释（注意：必须使用 `resource:` 前缀）：
+
+```go
+// +kubebuilder:resource:shortName=hw
+// +kubebuilder:resource:categories=all
+type HelloWorld struct { ... }
 ```
 
-**参数解释：**
+#### 参数说明：
 
-| 参数 | 值 | 作用 |
-|------|-----|------|
-| `--group` | `demo` | API group 名称 |
-| `--version` | `v1alpha1` | API 版本 |
-| `--kind` | `HelloWorld` | 资源类型名称 |
+**`+kubebuilder:resource:shortName=hw`**
+- 定义资源的短名称。
+- 效果：可以使用 `kubectl get hw` 代替完整的 `kubectl get helloworlds.demo.vitaaaaa.icu`。
+- *注意：如果有多个短名称，需要写多行。*
 
-**三个参数共同定义了 CRD 的身份：**
+**`+kubebuilder:resource:categories=all`**
+- 将资源归入某个类别。
+- `all` 是最常用的类别，包含 Kubernetes 内置的核心资源（Pod, Service, Deployment 等）。
+- 效果：执行 `kubectl get all` 时会显示你的 CRD。
+
+#### 生成的 CRD YAML 变化：
 
 ```yaml
-apiVersion: <group>.<domain>/<version>
-kind: <Kind>
-
-# 实际效果：
-apiVersion: demo.vitaaaaa.icu/v1alpha1
-kind: HelloWorld
+spec:
+  names:
+    kind: HelloWorld
+    plural: helloworlds
+    shortNames:
+    - hw        # ← 由 +kubebuilder:resource:shortName=hw 生成
+    categories:
+    - all       # ← 由 +kubebuilder:resource:categories=all 生成
 ```
 
-**`--group`（API group）**
-- 逻辑上相关的 API 的分组
-- 类似于 Kubernetes 内置的 `apps`、`batch`、`networking.k8s.io`
-- 通常用项目/团队/功能名命名
+#### 更新步骤：
+```bash
+make manifests  # 重新生成 CRD YAML
+kubectl apply -f config/crd/bases/demo.vitaaaaa.icu_helloworlds.yaml # 必须更新集群中的 CRD 定义！
 
-**`--version`（API version）**
-- 表示 API 的成熟度
-- 常见版本：`v1alpha1`（实验性）、`v1beta1`（较稳定）、`v1`（稳定）
+# 测试短名称
+kubectl get hw -n test
 
-**`--kind`（资源类型）**
-- 资源的名称，必须大写字母开头
-- 使用 PascalCase（驼峰命名）
-- 类似于内置的 `Pod`、`Deployment`、`Service`
-
-**create api 做了什么？（两个问题都选 y）**
-
-1. **生成 API 类型定义**：`api/v1alpha1/helloworld_types.go`
-   - `HelloWorld` 结构体
-   - `HelloWorldSpec`（Spec 定义）
-   - `HelloWorldStatus`（Status 定义）
-
-2. **生成 Controller 骨架**：`internal/controller/helloworld_controller.go`
-   - `HelloWorldReconciler` 结构体
-   - `Reconcile()` 方法（你需要实现业务逻辑）
-   - `SetupWithManager()` 方法
-
-3. **生成测试文件**：
-   - `internal/controller/helloworld_controller_test.go`
-   - `internal/controller/suite_test.go`
-
-4. **生成 kustomize 配置**：
-   - `config/crd/` 目录
-   - `config/rbac/` 目录
-   - `config/samples/` 目录（包含示例 CR）
-
-5. **注册 API**：
-   - 在 `api/v1alpha1/groupversion_info.go` 中注册 group/version
-   - 在 `cmd/main.go` 中添加对 API 的引用
+# 测试类别（应包含 HelloWorld）
+kubectl get all -n test
+```
 
 ---
-
-### 其他常用 create 命令
-
-**只创建 Controller（不创建新 API）**
-```bash
-kubebuilder create api --group demo --version v1alpha1 --kind AnotherResource --controller=true --resource=false
-```
-
-**只创建 Resource（不创建 Controller）**
-```bash
-kubebuilder create api --group demo --version v1alpha1 --kind AnotherResource --controller=false --resource=true
-```
-
-**创建 Webhook**
-```bash
-kubebuilder create webhook --group demo --version v1alpha1 --kind HelloWorld --defaulting --programmatic-validation
-```
-
-## 常用命令
-
-### 安装 CRD 到集群
-
-```bash
-make install
-```
-
-### 本地运行控制器
-
-```bash
-make run
-```
-
-### 构建并部署到集群
-
-```bash
-make docker-build docker-push IMG=<your-registry>/<your-image>:<tag>
-make deploy IMG=<your-registry>/<your-image>:<tag>
-```
-
-### 运行测试
-
-```bash
-make test
-```
-
-### 生成 CRD manifests
-
-```bash
-make manifests
-```
-
-## 完整学习流程
-
-```bash
-# 1. 初始化项目
-kubebuilder init --domain vitaaaaa.icu --repo github.com/vitaaaaa/kubebuilder-learning
-
-# 2. 创建第一个 API
-kubebuilder create api --group demo --version v1alpha1 --kind HelloWorld
-
-# 3. 编辑 api/v1alpha1/helloworld_types.go 定义 Spec 和 Status
-
-# 4. 编辑 internal/controller/helloworld_controller.go 实现 Reconcile 逻辑
-
-# 5. 生成 CRD manifests
-make manifests
-
-# 6. 安装 CRD 到集群
-make install
-
-# 7. 本地运行 controller
-make run
-
-# 8. 创建 HelloWorld 实例测试
-kubectl apply -f config/samples/demo_v1alpha1_helloworld.yaml
-```
-
-## 学习路径
-
-- [ ] 项目初始化（已完成）
-- [ ] 创建第一个 CRD API
-- [ ] 定义 Spec 和 Status
-- [ ] 实现 Controller Reconcile 逻辑
-- [ ] 本地测试和调试
-- [ ] 部署到 Kubernetes 集群
-
-## 核心依赖
-
-- `sigs.k8s.io/controller-runtime`: Kubernetes controller 核心运行时库
-- `k8s.io/apimachinery`: Kubernetes API 对象类型
-- `k8s.io/client-go`: Kubernetes API 客户端
-- `github.com/onsi/ginkgo/v2`: BDD 测试框架
-
-## 参考资源
-
-- [Kubebuilder Book](https://book.kubebuilder.io/)
-- [Controller Runtime Docs](https://pkg.go.dev/sigs.k8s.io/controller-runtime)
-- [Kubernetes API Reference](https://kubernetes.io/docs/reference/)

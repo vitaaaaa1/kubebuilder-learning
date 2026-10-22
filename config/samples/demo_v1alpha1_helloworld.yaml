@@ -7,3 +7,5 @@ metadata:
   name: helloworld-sample
 spec:
   # TODO(user): Add fields here
+  message01: "vita"
+  message02: 5

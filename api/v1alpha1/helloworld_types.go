@@ -34,6 +34,15 @@ type HelloWorldSpec struct {
 	// foo is an example field of HelloWorld. Edit helloworld_types.go to remove/update
 	// +optional
 	Foo *string `json:"foo,omitempty"`
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=20
+	// +kubebuilder:validation:Pattern="^[a-z0-9]+$"
+	Message01 *string `json:"message01"`
+
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=100
+	// +kubebuilder:validation:MultipleOf=5
+	Message02 *int `json:"message02"`
 }
 
 // HelloWorldStatus defines the observed state of HelloWorld.
@@ -61,8 +70,13 @@ type HelloWorldStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:shortName=hw,categories=all
 
 // HelloWorld is the Schema for the helloworlds API
+// +kubebuilder:printcolumn:name="Message",type=string,JSONPath=.spec.message01
+// +kubebuilder:printcolumn:name="Status",type=string,JSONPath=.status.conditions[?(@.type=='Available')].status
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=.metadata.creationTimestamp
+// +kubebuilder:printcolumn:name="Foo",type=string,JSONPath=.spec.foo,priority=1
 type HelloWorld struct {
 	metav1.TypeMeta `json:",inline"`
 
