@@ -1,0 +1,9 @@
+apiVersion: demo.vitaaaaa.icu/v1alpha1
+kind: HelloWorld
+metadata:
+  labels:
+    app.kubernetes.io/name: kubebuilder-learning
+    app.kubernetes.io/managed-by: kustomize
+  name: helloworld-sample
+spec:
+  # TODO(user): Add fields here
