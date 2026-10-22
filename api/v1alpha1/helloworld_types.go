@@ -24,6 +24,35 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+// AppConfig defines the application configuration
+type AppConfig struct {
+	// Port is the port the application listens on
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	// +required
+	Port int `json:"port"`
+
+	// Enabled indicates if the application is enabled
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// Env holds key-value pairs of environment variables
+	// +optional
+	Env map[string]string `json:"env,omitempty"`
+}
+
+// User defines a user in the system
+type User struct {
+	// Name is the username
+	// +required
+	Name string `json:"name"`
+
+	// Role is the user role
+	// +kubebuilder:validation:Enum=admin;editor;viewer
+	// +required
+	Role string `json:"role"`
+}
+
 // HelloWorldSpec defines the desired state of HelloWorld
 type HelloWorldSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
@@ -34,6 +63,16 @@ type HelloWorldSpec struct {
 	// foo is an example field of HelloWorld. Edit helloworld_types.go to remove/update
 	// +optional
 	Foo *string `json:"foo,omitempty"`
+
+	// Config is the application configuration
+	// +required
+	Config AppConfig `json:"config"`
+
+	// Users is the list of users
+	// +optional
+	// +listType=map
+	// +listMapKey=name
+	Users []User `json:"users,omitempty"`
 }
 
 // HelloWorldStatus defines the observed state of HelloWorld.

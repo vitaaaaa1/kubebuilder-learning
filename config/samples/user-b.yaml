@@ -1,0 +1,16 @@
+# 模拟用户 B：添加 Charlie 用户
+apiVersion: demo.vitaaaaa.icu/v1alpha1
+kind: HelloWorld
+metadata:
+  name: concurrent-test
+  namespace: test
+spec:
+  config:
+    port: 80
+  users:
+  - name: alice
+    role: admin     # ← B 的版本里 Alice 还是 admin
+  - name: bob
+    role: editor
+  - name: charlie  # ← B 新增了 Charlie
+    role: viewer

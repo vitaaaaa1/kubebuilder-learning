@@ -1,0 +1,14 @@
+# 模拟用户 A：修改 Alice 的权限从 admin 改为 viewer
+apiVersion: demo.vitaaaaa.icu/v1alpha1
+kind: HelloWorld
+metadata:
+  name: concurrent-test
+  namespace: test
+spec:
+  config:
+    port: 80
+  users:
+  - name: alice
+    role: viewer    # ← A 修改了 Alice 的权限
+  - name: bob
+    role: editor
