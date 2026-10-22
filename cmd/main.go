@@ -36,6 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	demov1alpha1 "github.com/vitaaaaa/kubebuilder-learning/api/v1alpha1"
+	demov1beta1 "github.com/vitaaaaa/kubebuilder-learning/api/v1beta1"
 	"github.com/vitaaaaa/kubebuilder-learning/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
@@ -49,6 +50,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(demov1alpha1.AddToScheme(scheme))
+	utilruntime.Must(demov1beta1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 

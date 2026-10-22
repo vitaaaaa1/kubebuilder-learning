@@ -1,4 +1,5 @@
 ## Append samples of your project ##
 resources:
 - demo_v1alpha1_helloworld.yaml
+- demo_v1beta1_helloworld.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples
