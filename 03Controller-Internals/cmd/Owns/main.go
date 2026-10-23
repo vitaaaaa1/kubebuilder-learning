@@ -24,7 +24,9 @@ import (
 
 	// Import core k8s types we want to watch
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -33,6 +35,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // SimpleReconciler is our bare-metal reconciler
@@ -44,6 +48,49 @@ type SimpleReconciler struct {
 func (r *SimpleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	logger.Info("🔥 Reconcile triggered!", "namespace", req.Namespace, "name", req.Name)
+
+	// logic
+	var cm corev1.ConfigMap
+	err := r.Get(ctx, req.NamespacedName, &cm)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	// 2.
+	secretName := cm.Name + "-child-secret"
+	var secret corev1.Secret
+
+	err = r.Get(ctx, types.NamespacedName{Name: secretName, Namespace: cm.Namespace}, &secret)
+
+	if err != nil && apierrors.IsNotFound(err) {
+		logger.Info("✨ Creating child Secret automatically", "name", secretName)
+		secretToCreate := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      secretName,
+				Namespace: cm.Namespace,
+			},
+			Data: map[string][]byte{
+				"config-name": []byte(cm.Name), // byte(..) 表示类型转换， 转换为 byte
+			},
+		}
+
+		// 🌟 核心步骤：建立父子关系
+		// 这行代码会自动把 cm 的信息填入 Secret 的 ownerReferences 中
+		err := ctrl.SetControllerReference(&cm, secretToCreate, r.Scheme())
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		//
+		err = r.Create(ctx, secretToCreate)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		logger.Info("✅ Child Secret created successfully")
+	} else {
+		logger.Info("✅ Child Secret already exists")
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -56,7 +103,7 @@ func main() {
 	setupLog := ctrl.Log.WithName("setup")
 
 	scheme := runtime.NewScheme()
-	_ = corev1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme) // 注册 ConfigMap 和其他 corev1 资源
 
 	mgr, err := ctrl.NewManager(
 		ctrl.GetConfigOrDie(),
