@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"os"
 
+	"time"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -30,6 +32,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
+
+	"k8s.io/client-go/util/workqueue"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
 // RetryReconciler 用于演示 WorkQueue 的自动重试与退避机制
@@ -84,6 +90,9 @@ func main() {
 				"test": {},
 			},
 		},
+		Metrics: server.Options{
+			BindAddress: ":8080",
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -92,6 +101,13 @@ func main() {
 
 	if err = ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.ConfigMap{}).
+		WithOptions(controller.Options{
+			// 配置自定义的指数退避限速器
+			RateLimiter: workqueue.NewTypedItemExponentialFailureRateLimiter[ctrl.Request](
+				10*time.Second,  // BaseDelay: 基础延迟，第一次失败后等 1 秒
+				120*time.Second, // MaxDelay: 最大延迟，最长等待不超过 1 分钟
+			),
+		}).
 		Complete(&RetryReconciler{Client: mgr.GetClient()}); err != nil {
 		setupLog.Error(err, "unable to create controller")
 		os.Exit(1)
