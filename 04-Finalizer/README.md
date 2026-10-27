@@ -1,6 +1,6 @@
-# 04 Finalizers and Patching: 资源生命周期与更新策略
+# 04 Finalizer: 资源生命周期管理
 
-本专题记录如何安全地管理资源的生命周期（拦截删除）以及如何高效地更新资源（Patching 策略）。
+本专题记录如何通过 **Finalizer** 机制拦截资源删除请求，实现安全的资源清理流程。
 
 ---
 
@@ -27,20 +27,10 @@
 
 ---
 
-## 2. Patching 策略（待学习）
-
-**计划内容**：
--   `MergeFrom` vs `StrategicMergeFrom` vs `JSONPatch` 的区别。
--   `client.Apply`（Server-Side Apply）的使用场景。
--   `r.Status().Patch()` vs `r.Update()` 的选择。
--   字段冲突与 Ownership 概念。
-
----
-
 ## 实验目录结构
 
 ```
-04-Finalizers-and-Patching/
+04-Finalizer/
 ├── cmd/
 │   └── finalizer-demo/
 │       └── main.go          # Finalizer 拦截删除实验
