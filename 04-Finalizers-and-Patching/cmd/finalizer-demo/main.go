@@ -20,12 +20,13 @@ import (
 	"context"
 	"flag"
 	"os"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -58,9 +59,38 @@ func (r *FinalizerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			// ---------------------------------------------------------
 			// 在这里执行清理逻辑（例如：删除云数据库、取消 DNS 记录等）
 			// ---------------------------------------------------------
+			time.Sleep(20 * time.Second)
 
 			// 2. 清理完成后，移除 Finalizer
 			controllerutil.RemoveFinalizer(&cm, finalizerName)
+			/*
+
+				>>
+				kind: ConfigMap
+				metadata:
+				  creationTimestamp: "2026-10-27T02:51:01Z"
+				  finalizers:
+				  - kubebuilder-learning/finalizer
+				  name: finalizers-test
+				  namespace: test
+				  resourceVersion: "14051058411"
+				  uid: bfddcee2-ecc4-45b6-bceb-7cb9246e9331
+
+				>> 执行删除资源操作后
+				apiVersion: v1
+				kind: ConfigMap
+				metadata:
+				  creationTimestamp: "2026-10-27T02:51:01Z"
+				  deletionGracePeriodSeconds: 0
+				  deletionTimestamp: "2026-10-27T02:51:09Z"  // 携带删除标签
+				  finalizers:   // controller 监测到携带了 deletionTimestamp 标签后，再执行删除 finalizers 标签操作
+				  - kubebuilder-learning/finalizer
+				  name: finalizers-test
+				  namespace: test
+				  resourceVersion: "14051059489"
+				  uid: bfddcee2-ecc4-45b6-bceb-7cb9246e9331
+			*/
+
 			if err := r.Update(ctx, &cm); err != nil {
 				logger.Error(err, "Failed to remove finalizer")
 				return ctrl.Result{}, err
@@ -96,6 +126,11 @@ func main() {
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,
+		Cache: cache.Options{
+			DefaultNamespaces: map[string]cache.Config{
+				"test": {},
+			},
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
