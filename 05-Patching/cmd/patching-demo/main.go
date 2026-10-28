@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/retry"
@@ -89,30 +91,37 @@ func main() {
 	// 🟢 修改者 A: 修改 annotations
 	go func() {
 		defer wg.Done()
-		fmt.Println("👤 修改者 A: 我要修改 annotations...")
+		fmt.Println("👤 修改者 A: 我要修改 annotations (用 Patch)...")
 
-		obj := baseCM.DeepCopy()
-		obj.Annotations["modified-by"] = "A"
-
-		time.Sleep(2 * time.Second) // 模拟处理延迟
+		// 🔑 构造 Patch 数据 (只包含我们要修改的字段)
+		patchData, _ := json.Marshal(map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"annotations": map[string]string{
+					"modified-by": "A",
+				},
+			},
+		})
 
 		count := 0
 		err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 
-			time.Sleep(3 * time.Second)
+			time.Sleep(3 * time.Second) // 模拟处理延迟
 			fmt.Println(count)
 			count++ // Eroor Code: 409 会导致进入无限循环
 
-			obj.Annotations["modified-by"] = "A"
-			fmt.Println(obj.ResourceVersion)
-
-			_, err = clientset.CoreV1().ConfigMaps(namespace).Update(ctx, obj, metav1.UpdateOptions{})
-			return err
+			result, err := clientset.CoreV1().ConfigMaps(namespace).Patch(
+				ctx, name, types.MergePatchType, patchData, metav1.PatchOptions{},
+			)
+			if err != nil {
+				fmt.Printf("   ❌ 修改者 A 失败: %v\n", err)
+			} else {
+				fmt.Printf("   ✅ 修改者 A 成功! 新 ResourceVersion: %s\n", result.ResourceVersion)
+			}
+			return nil
 		})
 		if err != nil {
 			return
 		}
-
 	}()
 
 	// 🔵 修改者 B: 修改 Data

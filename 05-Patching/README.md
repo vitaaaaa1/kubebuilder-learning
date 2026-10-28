@@ -4,34 +4,68 @@
 
 ---
 
-## 计划学习内容
+## 1. 已学习的 PatchType
 
-### 1. Patching 策略对比
+### MergePatchType (RFC 7396)
+- **目录**: `cmd/patching-demo-merge/`
+- **文档**: `docs/patch/client-go/merge-patch.md`
+- **核心概念**: JSON Merge Patch，三路合并，最常用。
+- **HTTP Content-Type**: `application/merge-patch+json`
+- **缺陷验证**: `cmd/patching-demo-merge-limitations/`（数组全量替换问题）
 
-| 策略 | API | 特点 | 适用场景 |
-| :--- | :--- | :--- | :--- |
-| **MergeFrom** | `client.MergeFrom(original)` | 三路合并（Three-Way Merge） | 最常用，适合大多数更新场景 |
-| **StrategicMergeFrom** | `client.StrategicMergeFrom(original)` | K8s 原生合并策略，支持 `+patchStrategy` | 需要智能合并列表字段（如 Containers） |
-| **JSONPatch** | `client.RawPatch(...)` | 精确的 JSON Patch 操作（RFC 6902） | 需要原子性操作、细粒度控制 |
-| **Server-Side Apply** | `client.Apply` | K8s 1.18+ 推荐，Field Ownership 模型 | 多 Controller 协作，避免冲突 |
+### StrategicMergePatchType (K8s Native)
+- **目录**: `cmd/patching-demo-strategic/`
+- **文档**: `docs/patch/client-go/strategic-patch.md`
+- **核心概念**: 理解 `+patchStrategy=merge`，智能合并数组（containers、volumes）。
+- **HTTP Content-Type**: `application/strategic-merge-patch+json`
 
-### 2. 核心问题
+### JSONPatchType (RFC 6902)
+- **目录**: `cmd/json-add-map-key/`, `cmd/json-replace-field/`, `cmd/json-remove-annotation/`, `cmd/json-array-operations/`, `cmd/json-combined-ops/`
+- **文档**: `docs/patch/client-go/json-patch.md`
+- **核心概念**: 命令式操作列表（add/remove/replace/test），精确操作语义。
+- **HTTP Content-Type**: `application/json-patch+json`
 
--   `r.Update()` vs `r.Patch()` 的区别？
--   何时使用 `r.Status().Patch()`？
--   Field Owner 冲突如何处理？
--   什么是三路合并（Three-Way Merge）？
+### ApplyPatchType (Server-Side Apply, SSA)
+- **目录**: `cmd/ssa-basic/`, `cmd/ssa-field-ownership/`, `cmd/ssa-crd-support/`
+- **文档**: `docs/patch/client-go/ssa.md`
+- **核心概念**: 字段所有权模型（`fieldManager` + `managedFields`），多 Controller 安全协作。
+- **HTTP Content-Type**: `application/apply-patch+yaml`
 
 ---
 
-## 实验目录结构（待填充）
+## 2. 计划学习的 PatchType
+
+已全部学习完成 ✅
+
+---
+
+## 实验目录结构（按 PatchType 隔离）
 
 ```
 05-Patching/
 ├── cmd/
-│   ├── mergefrom-demo/       # MergeFrom 实验
-│   ├── strategic-demo/       # StrategicMergeFrom 实验
-│   └── ssa-demo/             # Server-Side Apply 实验
-├── patching.md               # Patching 理论文档（待创建）
-└── README.md                 # 本文件（专题总览）
+│   ├── conflict-demo-01/                 # Update 409 Conflict 实验
+│   ├── conflict-demo-01-retry/           # RetryOnConflict 重试实验
+│   ├── patching-demo/                    # Patch 基础实验
+│   ├── patching-demo-merge/              # MergePatchType 实验
+│   ├── patching-demo-merge-limitations/  # MergePatch 数组缺陷验证
+│   ├── patching-demo-strategic/          # StrategicMergePatchType 实验
+│   ├── json-add-map-key/                 # JSONPatch: add 操作（map key upsert 语义）
+│   ├── json-replace-field/               # JSONPatch: replace 操作（路径必须存在）
+│   ├── json-remove-annotation/           # JSONPatch: remove 操作（精确删除）
+│   ├── json-array-operations/            # JSONPatch: 数组 add/replace/remove（按索引）
+│   ├── json-combined-ops/                # JSONPatch: 组合多个操作（原子执行）
+│   ├── ssa-basic/                        # SSA: 基础用法，字段所有权记录
+│   ├── ssa-field-ownership/              # SSA: 多 fieldManager 协作，字段隔离
+│   └── ssa-crd-support/                  # SSA: 对 CRD 有效（StrategicMerge 做不到）
+├── docs/
+│   └── patch/
+│       └── client-go/
+│           ├── request-lifecycle.md      # 请求生命周期全流程
+│           ├── merge-patch.md            # MergePatchType 理论+缺陷
+│           ├── strategic-patch.md        # StrategicMergePatchType 理论
+│           ├── strategic-patch-principles.md # StrategicMerge 底层原理+缺陷
+│           ├── json-patch.md             # JSONPatchType 理论+操作语义
+│           └── ssa.md                    # ApplyPatchType/SSA 理论+字段所有权
+└── README.md                             # 本文件（专题总览）
 ```

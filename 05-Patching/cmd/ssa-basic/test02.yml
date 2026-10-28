@@ -1,0 +1,387 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1675"
+    meta.helm.sh/release-name: yx-services
+    meta.helm.sh/release-namespace: default
+  creationTimestamp: "2025-09-25T08:40:34Z"
+  generation: 1827
+  labels:
+    app: yx-trade-biz
+    app.kubernetes.io/instance: yx-services
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: yx-services
+    app.kubernetes.io/version: 1.0.0
+    helm.sh/chart: yx-services
+  managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:replicas: {}
+      manager: helm
+      operation: Update
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:template:
+            f:metadata:
+              f:annotations:
+                f:kubectl.kubernetes.io/restartedAt: {}
+      manager: kubectl-rollout
+      operation: Update
+      time: "2025-12-09T03:16:18Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:redeploy-timestamp: {}
+              f:labels:
+                f:pod-template-hash: {}
+            f:spec:
+              f:containers:
+                k:{"name":"yx-trade-biz"}:
+                  f:resources:
+                    f:requests:
+                      f:cpu: {}
+                      f:memory: {}
+      manager: OneConsole-App-CS
+      operation: Update
+      time: "2026-10-20T01:48:21Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:meta.helm.sh/release-name: {}
+            f:meta.helm.sh/release-namespace: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:app.kubernetes.io/instance: {}
+            f:app.kubernetes.io/managed-by: {}
+            f:app.kubernetes.io/name: {}
+            f:app.kubernetes.io/version: {}
+            f:helm.sh/chart: {}
+        f:spec:
+          f:progressDeadlineSeconds: {}
+          f:revisionHistoryLimit: {}
+          f:selector: {}
+          f:strategy:
+            f:rollingUpdate:
+              .: {}
+              f:maxSurge: {}
+              f:maxUnavailable: {}
+            f:type: {}
+          f:template:
+            f:metadata:
+              f:labels:
+                .: {}
+                f:app: {}
+                f:app.kubernetes.io/instance: {}
+                f:app.kubernetes.io/name: {}
+                f:guancePilotAutoEnable: {}
+            f:spec:
+              f:containers:
+                k:{"name":"yx-trade-biz"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"JAVA_OPTS"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"NACOS_CLUSTER_NAME"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"NACOS_DISCOVERY_IP"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:fieldRef: {}
+                    k:{"name":"NACOS_HOST"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"NACOS_NAMESPACE"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"NACOS_PORT"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"SPRING_APPLICATION_NAME"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"SPRING_CLOUD_NACOS_PASSWORD"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"SPRING_CLOUD_NACOS_USERNAME"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"SPRING_PROFILES_ACTIVE"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:lifecycle:
+                    .: {}
+                    f:preStop:
+                      .: {}
+                      f:exec:
+                        .: {}
+                        f:command: {}
+                  f:livenessProbe:
+                    .: {}
+                    f:failureThreshold: {}
+                    f:httpGet:
+                      .: {}
+                      f:path: {}
+                      f:port: {}
+                      f:scheme: {}
+                    f:initialDelaySeconds: {}
+                    f:periodSeconds: {}
+                    f:successThreshold: {}
+                    f:timeoutSeconds: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":9008,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:name: {}
+                      f:protocol: {}
+                  f:readinessProbe:
+                    .: {}
+                    f:failureThreshold: {}
+                    f:httpGet:
+                      .: {}
+                      f:path: {}
+                      f:port: {}
+                      f:scheme: {}
+                    f:initialDelaySeconds: {}
+                    f:periodSeconds: {}
+                    f:successThreshold: {}
+                    f:timeoutSeconds: {}
+                  f:resources:
+                    .: {}
+                    f:limits:
+                      .: {}
+                      f:cpu: {}
+                      f:memory: {}
+                    f:requests: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+                  f:volumeMounts:
+                    .: {}
+                    k:{"mountPath":"/app/shared"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+              f:dnsPolicy: {}
+              f:imagePullSecrets:
+                .: {}
+                k:{"name":"image-pull-secret-registry-cred-enterprise"}: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:terminationGracePeriodSeconds: {}
+              f:volumes:
+                .: {}
+                k:{"name":"shared-storage"}:
+                  .: {}
+                  f:name: {}
+                  f:persistentVolumeClaim:
+                    .: {}
+                    f:claimName: {}
+      manager: helm
+      operation: Update
+      time: "2026-10-28T01:58:06Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            f:deployment.kubernetes.io/revision: {}
+        f:status:
+          f:availableReplicas: {}
+          f:conditions:
+            .: {}
+            k:{"type":"Available"}:
+              .: {}
+              f:lastTransitionTime: {}
+              f:lastUpdateTime: {}
+              f:message: {}
+              f:reason: {}
+              f:status: {}
+              f:type: {}
+            k:{"type":"Progressing"}:
+              .: {}
+              f:lastTransitionTime: {}
+              f:lastUpdateTime: {}
+              f:message: {}
+              f:reason: {}
+              f:status: {}
+              f:type: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+          f:terminatingReplicas: {}
+          f:updatedReplicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2026-10-28T01:59:07Z"
+  name: yx-trade-biz
+  namespace: default
+  resourceVersion: "14061998764"
+  uid: e9c477ba-ac75-4dc4-8e76-13e5d41952e3
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: yx-trade-biz
+      app.kubernetes.io/instance: yx-services
+      app.kubernetes.io/name: yx-services
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/restartedAt: "2025-12-09T11:16:18+08:00"
+        redeploy-timestamp: "1791452214402"
+      labels:
+        app: yx-trade-biz
+        app.kubernetes.io/instance: yx-services
+        app.kubernetes.io/name: yx-services
+        guancePilotAutoEnable: "on"
+        pod-template-hash: 54b498cdc9
+    spec:
+      containers:
+        - env:
+            - name: JAVA_OPTS
+              value: |
+                -XX:+UseG1GC -XX:MaxGCPauseMillis=300 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/heapdump.hprof -XX:+ExitOnOutOfMemoryError -XX:+UseContainerSupport -XX:MaxRAMPercentage=25.0 -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai -Djava.security.egd=file:/dev/./urandom
+            - name: SPRING_PROFILES_ACTIVE
+              value: staging
+            - name: SPRING_APPLICATION_NAME
+              value: yx-trade-biz
+            - name: NACOS_CLUSTER_NAME
+              value: staging
+            - name: NACOS_HOST
+              value: nacos-cs
+            - name: NACOS_PORT
+              value: "8848"
+            - name: NACOS_NAMESPACE
+              value: staging
+            - name: SPRING_CLOUD_NACOS_USERNAME
+              value: nacos
+            - name: SPRING_CLOUD_NACOS_PASSWORD
+              value: wysiyu@2025
+            - name: SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING
+              value: "true"
+            - name: NACOS_DISCOVERY_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+          image: baisui-registry-vpc.cn-hangzhou.cr.aliyuncs.com/baisui/yx-trade-biz:fc767fc0
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - sleep 15
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /actuator/health/liveness
+              port: 9008
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: yx-trade-biz
+          ports:
+            - containerPort: 9008
+              name: http
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /actuator/health/readiness
+              port: 9008
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: "2"
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 1Gi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /app/shared
+              name: shared-storage
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+        - name: image-pull-secret-registry-cred-enterprise
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 50
+      volumes:
+        - name: shared-storage
+          persistentVolumeClaim:
+            claimName: livemall-shared-storage
+status:
+  availableReplicas: 1
+  conditions:
+    - lastTransitionTime: "2026-10-28T01:59:07Z"
+      lastUpdateTime: "2026-10-28T01:59:07Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-10-20T03:06:29Z"
+      lastUpdateTime: "2026-10-28T01:59:07Z"
+      message: ReplicaSet "yx-trade-biz-6886cf6d5c" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+  observedGeneration: 1827
+  readyReplicas: 1
+  replicas: 1
+  terminatingReplicas: 0
+  updatedReplicas: 1

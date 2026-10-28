@@ -91,10 +91,9 @@ func main() {
 		defer wg.Done()
 		fmt.Println("👤 修改者 A: 我要修改 annotations...")
 
+		//
 		obj := baseCM.DeepCopy()
 		obj.Annotations["modified-by"] = "A"
-
-		time.Sleep(2 * time.Second) // 模拟处理延迟
 
 		//result, err := clientset.CoreV1().ConfigMaps(namespace).Update(ctx, obj, metav1.UpdateOptions{})
 		//if err != nil {
@@ -121,7 +120,7 @@ func main() {
 			   9          → ❌ 409 Conflict (无限循环)
 			*/
 
-			time.Sleep(3 * time.Second)
+			time.Sleep(3 * time.Second) // 模拟处理延迟
 			fmt.Println(count)
 			count++ // Eroor Code: 409 会导致进入无限循环
 
@@ -144,7 +143,6 @@ func main() {
 		if err != nil {
 			return
 		}
-
 	}()
 
 	// 🔵 修改者 B: 修改 Data
