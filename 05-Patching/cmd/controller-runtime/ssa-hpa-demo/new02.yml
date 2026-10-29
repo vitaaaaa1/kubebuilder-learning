@@ -1,0 +1,98 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"autoscaling/v2","kind":"HorizontalPodAutoscaler","metadata":{"annotations":{},"name":"my-app01","namespace":"test"},"spec":{"maxReplicas":10,"metrics":[{"resource":{"name":"cpu","target":{"averageUtilization":70,"type":"Utilization"}},"type":"Resource"}],"minReplicas":1,"scaleTargetRef":{"apiVersion":"apps/v1","kind":"Deployment","name":"my-app01"}}}
+  creationTimestamp: "2026-10-20T08:02:01Z"
+  managedFields:
+    - apiVersion: autoscaling/v2
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+        f:spec:
+          f:maxReplicas: {}
+          f:metrics: {}
+          f:scaleTargetRef:
+            f:apiVersion: {}
+            f:kind: {}
+            f:name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-10-20T08:02:01Z"
+    - apiVersion: autoscaling/v2
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:conditions:
+            .: {}
+            k:{"type":"AbleToScale"}:
+              .: {}
+              f:lastTransitionTime: {}
+              f:message: {}
+              f:reason: {}
+              f:status: {}
+              f:type: {}
+            k:{"type":"ScalingActive"}:
+              .: {}
+              f:lastTransitionTime: {}
+              f:message: {}
+              f:reason: {}
+              f:status: {}
+              f:type: {}
+          f:currentMetrics: {}
+          f:currentReplicas: {}
+          f:desiredReplicas: {}
+          f:lastScaleTime: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2026-10-23T03:36:56Z"
+    - apiVersion: autoscaling/v2
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:minReplicas: {}
+      manager: kubectl-edit
+      operation: Update
+      time: "2026-10-29T08:12:58Z"
+  name: my-app01
+  namespace: test
+  resourceVersion: "14076245191"
+  uid: 2041a307-06ce-4305-ae4b-1d8d960e04b5
+spec:
+  maxReplicas: 10
+  metrics:
+    - resource:
+        name: cpu
+        target:
+          averageUtilization: 70
+          type: Utilization
+      type: Resource
+  minReplicas: 2
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-app01
+status:
+  conditions:
+    - lastTransitionTime: "2026-10-23T03:36:56Z"
+      message: 'the HPA controller was unable to get the target''s current scale: deployments.apps
+      "my-app01" not found'
+      reason: FailedGetScale
+      status: "False"
+      type: AbleToScale
+    - lastTransitionTime: "2026-10-20T08:02:31Z"
+      message: 'the HPA was unable to compute the replica count: failed to get cpu utilization:
+      missing request for cpu in container my-app01 of Pod my-app01-57b9797fdc-7qnf8'
+      reason: FailedGetResourceMetric
+      status: "False"
+      type: ScalingActive
+  currentMetrics:
+    - type: ""
+  currentReplicas: 3
+  desiredReplicas: 3
+  lastScaleTime: "2026-10-20T11:20:19Z"

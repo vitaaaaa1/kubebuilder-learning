@@ -325,7 +325,7 @@ err := r.Patch(ctx, &deploy, client.Apply,
 每个实验是一个独立的代码目录，一个目录只验证一个概念：
 
 ```
-05-Patching/cmd/
+05-Patching/cmd/client-go/
 ├── ssa-basic/                 # SSA: 基础用法，字段所有权记录
 ├── ssa-field-ownership/       # SSA: 多 fieldManager 协作，字段隔离
 └── ssa-crd-support/           # SSA: 对 CRD 有效（StrategicMerge 做不到）
@@ -388,7 +388,7 @@ err := r.Patch(ctx, &deploy, client.Apply,
 | **适合** | Operator/Controller 开发、GitOps、多团队共享资源 |
 | **不适合** | 简单场景（复杂度高于其他 PatchType） |
 | **Controller Runtime** | `client.Apply` + `client.FieldOwner("my-controller")` |
-| **实验代码** | `cmd/ssa-basic/`, `cmd/ssa-field-ownership/`, `cmd/ssa-crd-support/` |
+| **实验代码** | `cmd/client-go/ssa-basic/`, `cmd/client-go/ssa-field-ownership/`, `cmd/client-go/ssa-crd-support/` |
 
 ---
 

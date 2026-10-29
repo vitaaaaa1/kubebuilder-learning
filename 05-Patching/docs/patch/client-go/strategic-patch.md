@@ -307,7 +307,7 @@ containers:
 | **适合** | 修改 K8s 内置资源的数组字段（containers、volumes、env） |
 | **不适合** | CRD（无 `+patchStrategy` 标记）、需要字段所有权 |
 | **Controller Runtime** | `client.StrategicMergeFrom(original)` |
-| **实验代码** | `cmd/patching-demo-strategic/`（智能合并验证） |
+| **实验代码** | `cmd/client-go/patching-demo-strategic/`（智能合并验证） |
 | **与 MergePatch 的关系** | MergePatch 的超集：在简单字段上行为一致，在数组上更智能 |
 
 ---

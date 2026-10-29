@@ -147,7 +147,7 @@ Server   │      Modified (你修改后的版本)
 
 **问题**：MergePatch 把数组当成**原子整体**，不知道元素有"唯一标识"。
 
-**实验验证**：`cmd/patching-demo-merge-limitations/main.go`
+**实验验证**：`cmd/client-go/patching-demo-merge-limitations/main.go`
 
 **场景**：两个 Controller 同时给 Deployment 的 `containers` 数组加元素
 
@@ -243,7 +243,7 @@ Controller B 的 Patch: {"containers": [main-app, sidecar-monitoring]}
 | **不适合** | 修改数组（containers, volumes）、需要字段所有权、"add-if-not-exists" |
 | **Controller Runtime** | `client.MergeFrom(original)` |
 | **默认推荐** | ✅ **最常用，默认选这个**（只要不涉及数组） |
-| **实验代码** | `cmd/patching-demo-merge/`（基本用法）、`cmd/patching-demo-merge-limitations/`（数组覆盖缺陷） |
+| **实验代码** | `cmd/client-go/patching-demo-merge/`（基本用法）、`cmd/client-go/patching-demo-merge-limitations/`（数组覆盖缺陷） |
 
 ---
 

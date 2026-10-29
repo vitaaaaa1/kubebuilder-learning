@@ -1,50 +1,42 @@
-# 06 Subresources: 子资源
+# 06 Subresources: 子资源学习路径
 
-本专题记录 Kubernetes 中 Subresources（子资源）的机制、使用场景及最佳实践。
-
----
-
-## 1. 已学习的 Subresource
-
-### /status 子资源
-- **目录**: `cmd/status-subresource/`
-- **文档**: `docs/status-subresource.md`
-- **核心概念**: 状态与规格分离更新，`r.Status().Update/Patch` 不触发 Reconcile 循环。
-- **Marker**: `// +kubebuilder:subresource:status`
-- **关键点**: 更新 `/status` 不会修改 `spec`，不会影响其他 Controller 管理的字段。
-
-### /scale 子资源
-- **目录**: `cmd/scale-subresource/`
-- **文档**: `docs/scale-subresource.md`
-- **核心概念**: HPA 集成基础，绕过 `spec.replicas` 所有权检查。
-- **API**: `r.SubResource("scale").Update(...)`
-- **关键点**: `/scale` 子资源有特殊的 SSA 所有权处理，HPA 原生使用此接口。
+本章节记录 Kubernetes 中 Subresources（子资源）的机制、使用场景及最佳实践。
 
 ---
 
-## 2. 计划学习的 Subresource
+## 目录结构
 
-| 主题 | 状态 |
-|------|------|
-| 自定义子资源生成 (`+kubebuilder:subresource`) | ⏳ 计划中 |
-| `/status` 与 SSA 的交互 | ⏳ 计划中 |
-| `/scale` 与 HPA 集成实验 | ⏳ 计划中 |
-
----
-
-## 实验目录结构（按 Subresource 类型隔离）
-
-```
+```text
 06-Subresources/
 ├── cmd/
-│   ├── status-subresource/               # /status 子资源实验
-│   ├── scale-subresource/                # /scale 子资源实验
-│   └── ...
+│   ├── status-subresource/               # 实验 1: 观察独立 RV 与不触发 Reconcile
+│   └── scale-subresource/                # 实验 2: 让 CRD 支持 HPA 自动扩缩容
 ├── docs/
-│   ├── status-subresource.md             # /status 理论+实践
-│   ├── scale-subresource.md              # /scale 理论+HPA 集成
-│   └── ...
+│   ├── 01-spec-vs-status-philosophy.md   # 理论：Spec vs Status 的核心哲学
+│   ├── 02-subresource-mechanism.md       # 机制：独立 RV 与不触发 Reconcile
+│   ├── 03-kubebuilder-implementation.md  # 实践：Marker、YAML 生成与代码调用
+│   └── 04-scale-hpa-integration.md       # 进阶：Scale 子资源与 HPA 集成
 ├── go.mod
 ├── go.sum
-└── README.md                             # 本文件（专题总览）
+└── README.md                             # 本文件（学习路径总览）
 ```
+
+---
+
+## 学习进度
+
+| 步骤 | 文档 | 实验 | 状态 |
+| :--- | :--- | :--- | :--- |
+| **1. 核心哲学** | [Spec vs Status 哲学](./docs/01-spec-vs-status-philosophy.md) | - | ⏳ 计划中 |
+| **2. 底层机制** | [独立 RV 与隔离原理](./docs/02-subresource-mechanism.md) | `cmd/status-subresource/` | ⏳ 计划中 |
+| **3. Kubebuilder 开发** | [Marker 与代码实现](./docs/03-kubebuilder-implementation.md) | 包含在实验 1 中 | ⏳ 计划中 |
+| **4. Scale 子资源** | [集成 HPA](./docs/04-scale-hpa-integration.md) | `cmd/scale-subresource/` | ⏳ 计划中 |
+
+---
+
+## 核心概念预览
+
+1.  **Spec vs Status**: 意图（用户想要的） vs 观察（现实发生的）。
+2.  **独立 RV**: 更新 `/status` 会产生新的 ResourceVersion，但不会让 Spec 的 RV 变旧。
+3.  **避免自我循环**: 更新 `/status` 不会触发 Controller 的 Watch，避免 Reconcile 死循环。
+4.  **Scale 子资源**: 让 HPA 能读懂并控制自定义资源的 `replicas` 字段。

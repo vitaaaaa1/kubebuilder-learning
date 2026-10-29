@@ -336,7 +336,7 @@ kubectl patch deploy my-deploy --type strategic -p '{"spec":{"template":{"spec":
 每个实验是一个独立的代码目录，一个目录只验证一个概念：
 
 ```
-05-Patching/cmd/
+05-Patching/cmd/client-go/
 ├── json-add-map-key/                 # JSONPatch: add 操作（map key 语义）
 ├── json-replace-field/               # JSONPatch: replace 操作（路径必须存在）
 ├── json-remove-annotation/           # JSONPatch: remove 操作（精确删除）
@@ -461,7 +461,7 @@ kubectl patch deploy my-deploy --type strategic -p '{"spec":{"template":{"spec":
 | **适合** | 需要精确操作语义的场景、精确删除、按索引修改数组元素 |
 | **不适合** | 嵌套数组修改（需要计算索引）、不知道当前状态时、CRD 多 Controller 协作 |
 | **Controller Runtime** | `client.RawPatch(types.JSONPatchType, patchData)` |
-| **实验代码** | `cmd/json-add-map-key/`, `cmd/json-replace-field/`, `cmd/json-remove-annotation/`, `cmd/json-array-operations/`, `cmd/json-combined-ops/` |
+| **实验代码** | `cmd/client-go/json-add-map-key/`, `cmd/client-go/json-replace-field/`, `cmd/client-go/json-remove-annotation/`, `cmd/client-go/json-array-operations/`, `cmd/client-go/json-combined-ops/` |
 
 ---
 
