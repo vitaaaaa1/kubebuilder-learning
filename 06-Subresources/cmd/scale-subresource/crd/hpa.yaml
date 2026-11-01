@@ -1,0 +1,19 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: demoapp-hpa
+  namespace: test
+spec:
+  scaleTargetRef:
+    apiVersion: demo.vitaaaaa.icu/v1alpha1
+    kind: DemoApp
+    name: scale-demo     # ← 指向我们的 CRD 实例
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50

@@ -9,13 +9,17 @@
 ```text
 06-Subresources/
 ├── cmd/
-│   ├── status-subresource/               # 实验 1: 观察独立 RV 与不触发 Reconcile
-│   └── scale-subresource/                # 实验 2: 让 CRD 支持 HPA 自动扩缩容
+│   ├── status-kubebuilder/               # 实验 1: Status 子资源（Update vs Patch vs 偷渡测试）
+│   ├── status-subresource/               # 实验 2: 观察独立 RV 与不触发 Reconcile
+│   ├── WithEventFilter-predicate/        # 实验 3: Predicate 与无限循环演示
+│   └── scale-subresource/                # 实验 4: Scale 子资源与 HPA 集成
 ├── docs/
 │   ├── 01-spec-vs-status-philosophy.md   # 理论：Spec vs Status 的核心哲学
 │   ├── 02-subresource-mechanism.md       # 机制：独立 RV 与不触发 Reconcile
 │   ├── 03-kubebuilder-implementation.md  # 实践：Marker、YAML 生成与代码调用
-│   └── 04-scale-hpa-integration.md       # 进阶：Scale 子资源与 HPA 集成
+│   ├── 04-scale-hpa-integration.md       # 进阶：Scale 子资源与 HPA 集成
+│   ├── infinite-loop-and-predicates.md   # 补充：无限循环问题与 Predicate 使用方法
+│   └── resourceVersion-vs-generation.md  # 补充：RV 与 Generation 的本质区别
 ├── go.mod
 ├── go.sum
 └── README.md                             # 本文件（学习路径总览）
@@ -27,10 +31,12 @@
 
 | 步骤 | 文档 | 实验 | 状态 |
 | :--- | :--- | :--- | :--- |
-| **1. 核心哲学** | [Spec vs Status 哲学](./docs/01-spec-vs-status-philosophy.md) | - | ⏳ 计划中 |
-| **2. 底层机制** | [独立 RV 与隔离原理](./docs/02-subresource-mechanism.md) | `cmd/status-subresource/` | ⏳ 计划中 |
-| **3. Kubebuilder 开发** | [Marker 与代码实现](./docs/03-kubebuilder-implementation.md) | 包含在实验 1 中 | ⏳ 计划中 |
-| **4. Scale 子资源** | [集成 HPA](./docs/04-scale-hpa-integration.md) | `cmd/scale-subresource/` | ⏳ 计划中 |
+| **1. 核心哲学** | [Spec vs Status 哲学](./docs/01-spec-vs-status-philosophy.md) | - | ✅ 已完成 |
+| **2. 底层机制** | [独立 RV 与隔离原理](./docs/02-subresource-mechanism.md) | `cmd/status-subresource/` | ✅ 已完成 |
+| **3. Kubebuilder 开发** | [Marker 与代码实现](./docs/03-kubebuilder-implementation.md) | `cmd/status-kubebuilder/` | ✅ 已完成 |
+| **4. Scale 子资源** | [集成 HPA](./docs/04-scale-hpa-integration.md) | `cmd/scale-subresource/` | ✅ 已完成 |
+| **5. 补充知识** | [RV vs Generation](./docs/resourceVersion-vs-generation.md) | - | ✅ 已完成 |
+| **6. 补充知识** | [无限循环与 Predicate](./docs/infinite-loop-and-predicates.md) | `cmd/WithEventFilter-predicate/` | ✅ 已完成 |
 
 ---
 

@@ -1,0 +1,16 @@
+apiVersion: demo.vitaaaaa.icu/v1alpha1
+kind: DemoApp
+metadata:
+  name: scale-demo
+  namespace: test
+  labels:
+    app: scale-demo
+spec:
+  image: nginx:1.25
+  replicas: 2
+status:
+  replicas: 2
+  readyReplicas: 0
+  selector: "app=scale-demo"
+  phase: Pending
+  message: "Initial state"

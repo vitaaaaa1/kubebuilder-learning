@@ -1,0 +1,52 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: demoapps.demo.vitaaaaa.icu
+spec:
+  group: demo.vitaaaaa.icu
+  names:
+    kind: DemoApp
+    listKind: DemoAppList
+    plural: demoapps
+    singular: demoapp
+    shortNames:
+      - da
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                image:
+                  type: string
+                replicas:
+                  type: integer
+                  format: int32
+            status:
+              type: object
+              properties:
+                replicas:
+                  type: integer
+                  format: int32
+                readyReplicas:
+                  type: integer
+                  format: int32
+                selector:
+                  type: string
+                phase:
+                  type: string
+                message:
+                  type: string
+      # 🎯 核心：启用 /status 和 /scale 子资源
+      subresources:
+        status: {}   # 分离 Status 与 Spec
+        scale:
+          specReplicasPath: .spec.replicas
+          statusReplicasPath: .status.readyReplicas
+          labelSelectorPath: .status.selector
