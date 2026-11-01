@@ -44,6 +44,14 @@ spec:
       subresources:
         status: {}
         scale:
+          # 期望副本数路径（JSON 路径）
+          # HPA 读取这个值作为"当前 replicas"，并写入新的值
           specReplicasPath: .spec.replicas
+
+          # 实际就绪副本数路径（JSON 路径）
+          # HPA 读取这个值确认缩放是否生效
           statusReplicasPath: .status.readyReplicas
+
+          # Label Selector 路径（JSON 路径）
+          # HPA 用它来找到属于这个 CRD 的 Pod（用于采集 CPU/内存指标）
           labelSelectorPath: .status.selector
