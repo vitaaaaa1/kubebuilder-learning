@@ -1,0 +1,19 @@
+# ============================================================
+# 📝 Sample: DemoApp 资源实例
+# ============================================================
+# 前置条件：先 apply CRD
+#   kubectl apply -f crd.yaml
+#
+# 然后 apply 这个 sample
+#   kubectl apply -f sample.yaml
+# ============================================================
+
+apiVersion: demo.vitaaaaa.icu/v1alpha1
+kind: DemoApp
+metadata:
+  name: status-demo
+  namespace: test
+spec:
+  image: "nginx:1.25"
+  replicas: 3
+# status 部分由 Controller 填写，用户不应该手动声明

@@ -1,0 +1,56 @@
+# ============================================================
+# 📝 CRD 定义：DemoApp（演示 /status 子资源）
+# ============================================================
+#
+# 关键点：spec.subresources.status: {} 启用了 /status 子资源
+# 这使得 API Server 会暴露 /apis/demo.vitaaaaa.icu/v1alpha1/namespaces/{ns}/demoapps/{name}/status 端点
+# ============================================================
+
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: demoapps.demo.vitaaaaa.icu
+spec:
+  group: demo.vitaaaaa.icu
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - image
+                - replicas
+              properties:
+                image:
+                  type: string
+                  description: "用户期望的容器镜像"
+                replicas:
+                  type: integer
+                  description: "用户期望的副本数"
+            status:
+              type: object
+              properties:
+                readyReplicas:
+                  type: integer
+                  description: "实际就绪的副本数"
+                phase:
+                  type: string
+                  description: "当前阶段（Pending / Running / Failed）"
+                message:
+                  type: string
+                  description: "人类可读的状态信息"
+      # 🎯 核心：启用 /status 子资源
+      subresources:
+        status: {}
+  scope: Namespaced
+  names:
+    plural: demoapps
+    singular: demoapp
+    kind: DemoApp
+    shortNames:
+      - da

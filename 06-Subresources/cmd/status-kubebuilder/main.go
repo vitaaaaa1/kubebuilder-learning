@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 // ============================================================
@@ -249,6 +250,7 @@ func main() {
 
 	if err = ctrl.NewControllerManagedBy(mgr).
 		For(&command.DemoApp{}).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		Complete(&StatusDemoReconciler{Client: mgr.GetClient(), Scheme: scheme}); err != nil {
 		setupLog.Error(err, "unable to create controller")
 		os.Exit(1)
