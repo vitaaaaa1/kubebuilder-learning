@@ -127,39 +127,58 @@ func main() {
 	fmt.Printf("   Status.Conditions 数量: %d\n\n", len(existing.Status.Conditions))
 
 	// =============================================
-	// 🟢 实验 2: 使用 UpdateStatus 更新状态
+	// 🟢 实验 2: "偷渡"测试 (Smuggling Test)
 	// =============================================
 	fmt.Println("============================================================")
-	fmt.Println("🟢 实验 2: 使用 UpdateStatus 更新 Status")
+	fmt.Println("🟢 实验 2: '偷渡'测试 - 验证 Spec 隔离")
 	fmt.Println("============================================================")
 	fmt.Println()
-	fmt.Println("说明: 通常只有 kube-controller-manager 会更新 Status。")
-	fmt.Println("这里我们模拟控制器行为，手动注入一个 Status 字段。")
+	fmt.Println("说明: 我们尝试在更新 Status 时，偷偷修改 Spec (MinReplicas=999)。")
+	fmt.Println("如果服务器忽略了 Spec 的修改，说明子资源隔离生效。")
 	fmt.Println()
 
-	// 复制对象以修改 Status
+	// 1. 记录初始状态
+	existing, err = clientset.AutoscalingV2().HorizontalPodAutoscalers(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		panic(err)
+	}
+
+	initialMinReplicas := *existing.Spec.MinReplicas
+	initialRV := existing.ResourceVersion
+
+	fmt.Printf("📊 更新前: RV=%s, MinReplicas=%d, CurrentReplicas=%d\n\n", initialRV, initialMinReplicas, existing.Status.CurrentReplicas)
+
+	// 2. 准备"偷渡"
 	modified := existing.DeepCopy()
+	modified.Status.CurrentReplicas = 99      // 正常的 Status 更新
+	modified.Spec.MinReplicas = ptrInt32(999) // ❌ 恶意的 Spec 偷渡！
 
-	// 模拟修改 Status (注入一个自定义 Condition 或修改指标)
-	// 注意：真实的控制器会计算真实数据，这里为了演示 UpdateStatus API
-	modified.Status.CurrentReplicas = 99
-	modified.Status.DesiredReplicas = 99
-
-	// 关键：使用 UpdateStatus 而不是 Update
-	// 这对应 API 端点: PUT .../horizontalpodautoscalers/{name}/status
+	fmt.Println("📝 提交 UpdateStatus (携带 Spec.MinReplicas=999)...")
 	_, err = clientset.AutoscalingV2().HorizontalPodAutoscalers(namespace).UpdateStatus(ctx, modified, metav1.UpdateOptions{})
 	if err != nil {
 		fmt.Printf("   ❌ UpdateStatus 失败: %v\n", err)
-	} else {
-		fmt.Println("   ✅ UpdateStatus 成功! (Status 被独立更新)")
+		return
 	}
+	fmt.Println("   ✅ API Server 接受请求!")
 	fmt.Println()
 
-	// 验证
+	// 3. 验证结果
 	final, _ := clientset.AutoscalingV2().HorizontalPodAutoscalers(namespace).Get(ctx, name, metav1.GetOptions{})
-	fmt.Printf("📊 验证结果:\n")
-	fmt.Printf("   Spec.MinReplicas: %d (未变)\n", *final.Spec.MinReplicas)
-	fmt.Printf("   Status.CurrentReplicas: %d (已变为 99)\n\n", final.Status.CurrentReplicas)
+
+	fmt.Println("============================================================")
+	fmt.Println("📊 验证最终状态")
+	fmt.Println("============================================================")
+	fmt.Println()
+	fmt.Printf("   RV 变化: %s -> %s (etcd 全局递增，符合预期)\n", initialRV, final.ResourceVersion)
+	fmt.Printf("   Status: %d -> %d (✅ 成功更新)\n", existing.Status.CurrentReplicas, final.Status.CurrentReplicas)
+
+	// 核心验证点
+	if *final.Spec.MinReplicas == initialMinReplicas {
+		fmt.Printf("   Spec (MinReplicas): %d (✅ 保持原值! 偷渡 999 失败 -> 隔离生效!)\n", *final.Spec.MinReplicas)
+	} else {
+		fmt.Printf("   Spec (MinReplicas): %d (❌ 隔离失效! 被改成了 %d)\n", *final.Spec.MinReplicas, *modified.Spec.MinReplicas)
+	}
+	fmt.Println()
 
 	// =============================================
 	// 📊 核心结论
