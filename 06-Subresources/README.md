@@ -12,7 +12,8 @@
 │   ├── status-kubebuilder/               # 实验 1: Status 子资源（Update vs Patch vs 偷渡测试）
 │   ├── status-subresource/               # 实验 2: 观察独立 RV 与不触发 Reconcile
 │   ├── WithEventFilter-predicate/        # 实验 3: Predicate 与无限循环演示
-│   └── scale-subresource/                # 实验 4: Scale 子资源与 HPA 集成
+│   ├── scale-subresource/                # 实验 4: Scale 子资源与 HPA 集成（纯读写 /scale）
+│   └── scale-with-deployment/            # 实验 5: 管理真实 Deployment + HPA 闭环
 ├── docs/
 │   ├── 01-spec-vs-status-philosophy.md   # 理论：Spec vs Status 的核心哲学
 │   ├── 02-subresource-mechanism.md       # 机制：独立 RV 与不触发 Reconcile
@@ -35,8 +36,9 @@
 | **2. 底层机制** | [独立 RV 与隔离原理](./docs/02-subresource-mechanism.md) | `cmd/status-subresource/` | ✅ 已完成 |
 | **3. Kubebuilder 开发** | [Marker 与代码实现](./docs/03-kubebuilder-implementation.md) | `cmd/status-kubebuilder/` | ✅ 已完成 |
 | **4. Scale 子资源** | [集成 HPA](./docs/04-scale-hpa-integration.md) | `cmd/scale-subresource/` | ✅ 已完成 |
-| **5. 补充知识** | [RV vs Generation](./docs/resourceVersion-vs-generation.md) | - | ✅ 已完成 |
-| **6. 补充知识** | [无限循环与 Predicate](./docs/infinite-loop-and-predicates.md) | `cmd/WithEventFilter-predicate/` | ✅ 已完成 |
+| **5. 完整闭环** | - | `cmd/scale-with-deployment/` | ✅ 已完成 |
+| **6. 补充知识** | [RV vs Generation](./docs/resourceVersion-vs-generation.md) | - | ✅ 已完成 |
+| **7. 补充知识** | [无限循环与 Predicate](./docs/infinite-loop-and-predicates.md) | `cmd/WithEventFilter-predicate/` | ✅ 已完成 |
 
 ---
 

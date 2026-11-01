@@ -1,52 +1,100 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  # CRD 全名：{plural}.{group}
   name: demoapps.demo.vitaaaaa.icu
 spec:
+  # API Group：kubectl get demoapps.demo.vitaaaaa.icu
   group: demo.vitaaaaa.icu
   names:
-    kind: DemoApp
-    listKind: DemoAppList
-    plural: demoapps
-    singular: demoapp
+    kind: DemoApp              # 资源类型（单数，首字母大写）
+    listKind: DemoAppList      # 列表类型
+    plural: demoapps           # 复数形式（kubectl get demoapps）
+    singular: demoapp          # 单数形式（kubectl get demoapp）
     shortNames:
-      - da
-  scope: Namespaced
+      - da                     # 短名称（kubectl get da）
+  scope: Namespaced            # 命名空间级别资源（Cluster 表示集群级）
   versions:
     - name: v1alpha1
-      served: true
-      storage: true
+      served: true             # 是否通过 API 提供访问
+      storage: true            # 是否作为存储版本（etcd 中的版本）
       schema:
-        openAPIV3Schema:
+        openAPIV3Schema:       # CRD 的验证 Schema
           type: object
           properties:
             spec:
               type: object
               properties:
                 image:
-                  type: string
+                  type: string      # 容器镜像
                 replicas:
-                  type: integer
+                  type: integer     # 期望副本数（HPA 会修改这个字段）
                   format: int32
             status:
               type: object
               properties:
                 replicas:
-                  type: integer
+                  type: integer     # 当前副本数（同步自 spec.replicas）
                   format: int32
                 readyReplicas:
-                  type: integer
+                  type: integer     # 实际就绪副本数（HPA 读取这个值）
                   format: int32
                 selector:
-                  type: string
+                  type: string      # Label Selector（HPA 用来找到 Pod）
                 phase:
-                  type: string
+                  type: string      # 阶段（Pending/Running/Failed）
                 message:
-                  type: string
+                  type: string      # 人类可读的状态信息
+
+      # ============================================================
       # 🎯 核心：启用 /status 和 /scale 子资源
+      # ============================================================
+      #
+      # 子资源是独立的 API 端点，与主资源隔离：
+      #   - 主资源：/apis/demo.vitaaaaa.icu/v1alpha1/namespaces/{ns}/demoapps/{name}
+      #   - /status：.../demoapps/{name}/status
+      #   - /scale：  .../demoapps/{name}/scale
+      #
       subresources:
-        status: {}   # 分离 Status 与 Spec
+
+        # ----------------------------------------------------------
+        # /status 子资源
+        # ----------------------------------------------------------
+        #
+        # 作用：分离 Status 与 Spec 的更新
+        #
+        # 好处：
+        #   1. RBAC 隔离：Operator 可以只有 update status 权限
+        #   2. 避免自我循环：更新 /status 不会触发 Controller 再次 Reconcile
+        #   3. 安全护栏：即使 Status 更新中偷偷改了 Spec，API Server 也会静默丢弃
+        #
+        status: {}
+
+        # ----------------------------------------------------------
+        # /scale 子资源
+        # ----------------------------------------------------------
+        #
+        # 作用：让 HPA（Horizontal Pod Autoscaler）和 kubectl scale 能控制这个 CRD
+        #
+        # 原理：HPA 不知道你的 CRD 中哪个字段代表 "replicas"，
+        #       所以需要通过这三个路径映射到标准的 autoscaling/v1.Scale 格式。
+        #
+        # HPA 读取流程：
+        #   1. HPA 请求 /scale 端点
+        #   2. API Server 根据 specReplicasPath 读取 .spec.replicas → 作为 Scale.Spec.Replicas
+        #   3. API Server 根据 statusReplicasPath 读取 .status.readyReplicas → 作为 Scale.Status.Replicas
+        #   4. API Server 根据 labelSelectorPath 读取 .status.selector → 作为 Scale.Status.Selector
+        #   5. HPA 拿到这些值，计算新的 replicas，写回 .spec.replicas
+        #
         scale:
+          # 期望副本数路径（JSON 路径）
+          # HPA 读取这个值作为"当前 replicas"，并写入新的值
           specReplicasPath: .spec.replicas
+
+          # 实际就绪副本数路径（JSON 路径）
+          # HPA 读取这个值确认缩放是否生效
           statusReplicasPath: .status.readyReplicas
+
+          # Label Selector 路径（JSON 路径）
+          # HPA 用它来找到属于这个 CRD 的 Pod（用于采集 CPU/内存指标）
           labelSelectorPath: .status.selector

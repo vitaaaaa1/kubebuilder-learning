@@ -1,0 +1,9 @@
+apiVersion: demo.vitaaaaa.icu/v1alpha1
+kind: ScalableApp
+metadata:
+  name: my-scalable-app
+  namespace: test
+spec:
+  replicas: 2
+  image: anolis-registry.cn-zhangjiakou.cr.aliyuncs.com/openanolis/mysql:8.0.30-8.6
+  port: 80
