@@ -1,0 +1,12 @@
+apiVersion: demo.vitaaaaa.icu/v1alpha1
+kind: ApprovableApp
+metadata:
+  name: my-approvable-app
+  namespace: test
+  annotations:
+    # 🎯 审批信号：设置为 "true" 触发审批逻辑
+#    demo.vitaaaaa.icu/approved: "false"
+    demo.vitaaaaa.icu/approved: "true"
+spec:
+  replicas: 2
+  image: nginx:1.25

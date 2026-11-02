@@ -14,7 +14,8 @@
 │   ├── WithEventFilter-predicate/        # 实验 3: Predicate 与无限循环演示
 │   ├── scale-subresource/                # 实验 4: Scale 子资源与 HPA 集成（纯读写 /scale）
 │   ├── scale-with-deployment/            # 实验 5: 管理真实 Deployment + HPA 闭环
-│   └── rbac-subresource/                 # 实验 6: 子资源的 RBAC 隔离验证
+│   ├── rbac-subresource/                 # 实验 6: 子资源的 RBAC 隔离验证
+│   └── custom-subresource/               # 实验 7: Annotation 模拟 /approve 自定义子资源
 ├── docs/
 │   ├── 01-spec-vs-status-philosophy.md   # 理论：Spec vs Status 的核心哲学
 │   ├── 02-subresource-mechanism.md       # 机制：独立 RV 与不触发 Reconcile
@@ -39,8 +40,9 @@
 | **4. Scale 子资源** | [集成 HPA](./docs/04-scale-hpa-integration.md) | `cmd/scale-subresource/` | ✅ 已完成 |
 | **5. 完整闭环** | - | `cmd/scale-with-deployment/` | ✅ 已完成 |
 | **6. RBAC 隔离** | [子资源的 RBAC](./docs/05-subresource-rbac-isolation.md) | `cmd/rbac-subresource/` | ✅ 已完成 |
-| **7. 补充知识** | [RV vs Generation](./docs/resourceVersion-vs-generation.md) | - | ✅ 已完成 |
-| **8. 补充知识** | [无限循环与 Predicate](./docs/infinite-loop-and-predicates.md) | `cmd/WithEventFilter-predicate/` | ✅ 已完成 |
+| **7. 自定义子资源** | [Annotation 模拟子资源](./docs/06-custom-subresource-patterns.md) | `cmd/custom-subresource/` | ✅ 已完成 |
+| **8. 补充知识** | [RV vs Generation](./docs/resourceVersion-vs-generation.md) | - | ✅ 已完成 |
+| **9. 补充知识** | [无限循环与 Predicate](./docs/infinite-loop-and-predicates.md) | `cmd/WithEventFilter-predicate/` | ✅ 已完成 |
 
 ---
 
