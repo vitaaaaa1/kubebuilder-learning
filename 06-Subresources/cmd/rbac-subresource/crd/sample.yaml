@@ -1,0 +1,8 @@
+apiVersion: demo.vitaaaaa.icu/v1alpha1
+kind: RBACDemoApp
+metadata:
+  name: rbac-test-app
+  namespace: test
+spec:
+  replicas: 2
+  image: nginx:1.25

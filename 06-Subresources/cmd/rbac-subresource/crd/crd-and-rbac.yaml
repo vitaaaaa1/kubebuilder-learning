@@ -1,0 +1,98 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: rbacdemoapps.demo.vitaaaaa.icu
+spec:
+  group: demo.vitaaaaa.icu
+  names:
+    kind: RBACDemoApp
+    listKind: RBACDemoAppList
+    plural: rbacdemoapps
+    singular: rbacdemoapp
+    shortNames:
+      - rda
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                replicas:
+                  type: integer
+                  format: int32
+                image:
+                  type: string
+            status:
+              type: object
+              properties:
+                readyReplicas:
+                  type: integer
+                  format: int32
+                selector:
+                  type: string
+                phase:
+                  type: string
+      subresources:
+        status: {}
+        scale:
+          specReplicasPath: .spec.replicas
+          statusReplicasPath: .status.readyReplicas
+          labelSelectorPath: .status.selector
+---
+# ============================================================
+# 🎯 RBAC 隔离验证：有限权限的 Operator
+# ============================================================
+#
+# 这个 Role 只能：
+#   - 读取 rbacdemoapps（get, list, watch）
+#   - 更新 rbacdemoapps/status（update, patch）
+#   - 更新 rbacdemoapps/scale（update, patch）
+#
+# 这个 Role 不能：
+#   - 修改 rbacdemoapps 的 spec（无 update 权限）
+#   - 创建/删除 rbacdemoapps（无 create/delete 权限）
+#
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: limited-operator
+rules:
+  # 只能读主资源
+  - apiGroups: ["demo.vitaaaaa.icu"]
+    resources: ["rbacdemoapps"]
+    verbs: ["get", "list", "watch"]
+
+  # 能写 status（这是 Operator 的核心权限）
+  - apiGroups: ["demo.vitaaaaa.icu"]
+    resources: ["rbacdemoapps/status"]
+    verbs: ["update", "patch"]
+
+  # 能读写 scale（用于演示，生产环境通常给 HPA）
+  - apiGroups: ["demo.vitaaaaa.icu"]
+    resources: ["rbacdemoapps/scale"]
+    verbs: ["get", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: limited-operator-binding
+subjects:
+  - kind: ServiceAccount
+    name: limited-operator-sa
+    namespace: test
+roleRef:
+  kind: Role
+  name: limited-operator
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: limited-operator-sa
+  namespace: test

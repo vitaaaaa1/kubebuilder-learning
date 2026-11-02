@@ -1,0 +1,2 @@
+k8s.io/apimachinery v0.37.1/go.mod h1:jF84AyUi/IRIXRot5f+lm6MpxoWI+F1XgjaMmwCdTFw=
+sigs.k8s.io/controller-runtime v0.25.2/go.mod h1:4QqLdT6z/L6Olj8JJCtvztid4/fnIiYsfaTFScegctc=
