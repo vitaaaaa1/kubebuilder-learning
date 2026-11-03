@@ -6,7 +6,7 @@
 |---|---|---|---|
 | 01 | [01-fake-client-syntax.md](01-fake-client-syntax.md) | `fake.NewClientBuilder().WithScheme().Build()` 三行的语法拆解 | 看懂任何一条 Reconcile 测试的开头，知道改哪三处 |
 | 02 | [02-three-test-layers.md](02-three-test-layers.md) | 纯单测 / fake client / envtest 的边界对照 | 判断某条断言该写在哪一层，不再假绿 |
-| 03 | _待写_ | 表驱动测试：一个函数覆盖 4 个场景 | — |
+| 03 | [03-table-driven.md](03-table-driven.md) | 表驱动测试模板：一个函数覆盖多个场景 | 复制模板即可写新测试，知道怎么加 case |
 | 04 | _待写_ | Manager + 缓存：`GetClient` vs `GetAPIReader` | — |
 | 05 | _待写_ | 装 CRD 进 envtest：`CRDDirectoryPaths` | — |
 | 06 | _待写_ | Webhook 测试与 TLS | — |
@@ -24,3 +24,4 @@
 |---|---|
 | 01 | [cmd/get-branch/reconciler_test.go](../cmd/get-branch/reconciler_test.go) |
 | 02 | [cmd/envtest-basic/fake_test.go](../cmd/envtest-basic/fake_test.go) · [env_test.go](../cmd/envtest-basic/env_test.go) |
+| 03 | [cmd/get-branch/table_test.go](../cmd/get-branch/table_test.go) |

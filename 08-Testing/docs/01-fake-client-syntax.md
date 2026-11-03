@@ -178,19 +178,45 @@ t.Logf("%T", c)
 
 输出 `*fake.fakeClient`。小写开头说明它是未导出类型——**所以你只能通过接口使用它**，这也是 `Build()` 声明返回接口的原因。
 
-### 实验 2：删掉 `WithScheme`
+### 实验 2：删掉 `WithScheme`（结果和直觉相反）
 
 ```go
 c := fake.NewClientBuilder().Build()
 ```
 
-再跑测试，会报类似：
+实测结果——**不会报错**，`Get` 依然返回正常的 NotFound：
 
 ```text
-no kind is registered for the type v1.ConfigMap in scheme
+【不传 WithScheme】err = configmaps "x" not found
 ```
 
-因为 fake 不知道 `ConfigMap` 对应哪个 GVK，就无法在内存里存它。
+原因在 `Build()` 源码里（v0.19.3，第 218-220 行）：
+
+```go
+func (f *ClientBuilder) Build() client.WithWatch {
+	if f.scheme == nil {
+		f.scheme = scheme.Scheme      // ← 自动回退到 client-go 的全局 scheme
+	}
+	...
+}
+```
+
+也就是说：**`WithScheme(clientgoscheme.Scheme)` 和完全不写，效果一模一样**——因为默认值就是它。内置类型（ConfigMap/Secret/Pod…）本来就都在那张表里。
+
+那什么时候必须显式传？**当你要用 CRD 时**。你自己的 `Foo` 类型不在 client-go 的 scheme 里，这时才会真的报：
+
+```text
+no kind is registered for the type v1beta1.Foo in scheme
+```
+
+所以 `WithScheme` 的真正用途不是"让内置类型能用"，而是**"把你自己注册的类型表交进去"**。写法是合并，不是替换：
+
+```go
+s := runtime.NewScheme()
+_ = clientgoscheme.AddToScheme(s)   // 内置类型
+_ = myv1.AddToScheme(s)             // 你的 CRD
+c := fake.NewClientBuilder().WithScheme(s).Build()
+```
 
 ### 实验 3：去掉 `&`
 

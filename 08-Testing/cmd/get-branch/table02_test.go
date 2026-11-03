@@ -5,9 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -31,19 +29,20 @@ import (
 //   3. t.Run 循环：每个 case 变成一个独立子测试，可单独跑、可单独报错
 // ============================================================
 
-func TestReconcile_GetBranch(t *testing.T) {
-	// 两个"人造错误"，后面会作为期望值使用
-	boom := errors.New("apiserver 500: internal error")
-	forbidden := apierrors.NewForbidden(
-		schema.GroupResource{Resource: "configmaps"},
-		"demo",
-		errors.New("rbac denied"),
-	)
-
+func TestReconcile02_GetBranch(t *testing.T) {
 	// 所有场景都用同一个请求对象，靠"预置对象"和"钩子"制造差异
 	req := ctrl.Request{
 		NamespacedName: types.NamespacedName{Name: "demo", Namespace: "default"},
 	}
+
+	// 人造错误01: Get方法返回的错误不被 client.IgnoreNotFound 捕捉
+	boom := errors.New("apiserver error: xxxxx")
+	// 人造错误02: rbac error
+	forbidden := apierrors.NewForbidden(
+		schema.GroupResource{Resource: "configmaps_test"},
+		"demo",
+		errors.New("rbac denied"),
+	)
 
 	tests := []struct {
 		name        string             // 子测试名，会显示在 -run 和失败输出里
@@ -51,41 +50,35 @@ func TestReconcile_GetBranch(t *testing.T) {
 		interceptor *interceptor.Funcs // 非空 = 劫持 client 方法，模拟故障
 		wantErr     error              // nil = 期望 Reconcile 不报错
 	}{
-		{
-			name:    "对象不存在时忽略 NotFound",
-			objects: nil, // 空集群 → Get 必然 NotFound
-			// 不装钩子 → 用 fake 的真实行为
-			wantErr: nil,
-		},
+		// 人造错误01
 		{
 			name:    "apiserver 500 时原样返回错误",
 			objects: nil,
 			interceptor: &interceptor.Funcs{
-				Get: func(_ context.Context, _ client.WithWatch, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
+				Get: func(_ context.Context,
+					_ client.WithWatch,
+					_ client.ObjectKey,
+					_ client.Object,
+					_ ...client.GetOption) error {
 					return boom
 				},
 			},
 			wantErr: boom,
 		},
+		// 人造错误02
 		{
-			name:    "RBAC 403 时原样返回错误",
+			name:    "rbac 权限问题",
 			objects: nil,
 			interceptor: &interceptor.Funcs{
-				Get: func(_ context.Context, _ client.WithWatch, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
+				Get: func(_ context.Context,
+					_ client.WithWatch,
+					_ client.ObjectKey,
+					_ client.Object,
+					_ ...client.GetOption) error {
 					return forbidden
 				},
 			},
 			wantErr: forbidden,
-		},
-		{
-			name: "对象存在时正常返回",
-			objects: []client.Object{
-				&corev1.ConfigMap{
-					ObjectMeta: metav1.ObjectMeta{Name: "demo", Namespace: "default"},
-				},
-			},
-			// 不装钩子 → fake 从内存里真的找到了这个 ConfigMap
-			wantErr: nil,
 		},
 	}
 
