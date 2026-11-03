@@ -16,7 +16,9 @@
 │   ├── scale-with-deployment/            # 实验 5: 管理真实 Deployment + HPA 闭环
 │   ├── rbac-subresource/                 # 实验 6: 子资源的 RBAC 隔离验证
 │   ├── custom-subresource/               # 实验 7: Annotation 模拟 /approve 自定义子资源
-│   └── log-exec-subresource/             # 实验 8: /log 和 /exec 子资源的本质
+│   ├── log-exec-subresource/             # 实验 8: /log 和 /exec 子资源的本质
+│   ├── subresource-webhook/              # 实验 9: Webhook 保护 /status 子资源
+│   └── subresource-webhook-verify/       # 实验 9-Verify: 使用 kubeconfig 集成验证 Webhook
 ├── docs/
 │   ├── 01-spec-vs-status-philosophy.md   # 理论：Spec vs Status 的核心哲学
 │   ├── 02-subresource-mechanism.md       # 机制：独立 RV 与不触发 Reconcile
@@ -43,8 +45,9 @@
 | **6. RBAC 隔离** | [子资源的 RBAC](./docs/05-subresource-rbac-isolation.md) | `cmd/rbac-subresource/` | ✅ 已完成 |
 | **7. 自定义子资源** | [Annotation 模拟子资源](./docs/06-custom-subresource-patterns.md) | `cmd/custom-subresource/` | ✅ 已完成 |
 | **8. /log 与 /exec** | [流式操作子资源](./docs/07-log-exec-subresource.md) | `cmd/log-exec-subresource/` | ✅ 已完成 |
-| **9. 补充知识** | [RV vs Generation](./docs/resourceVersion-vs-generation.md) | - | ✅ 已完成 |
-| **10. 补充知识** | [无限循环与 Predicate](./docs/infinite-loop-and-predicates.md) | `cmd/WithEventFilter-predicate/` | ✅ 已完成 |
+| **9. 子资源 Webhook** | [Webhook 保护子资源](./docs/08-subresource-webhook.md) | `cmd/subresource-webhook/` | ✅ 已完成 |
+| **10. 补充知识** | [RV vs Generation](./docs/resourceVersion-vs-generation.md) | - | ✅ 已完成 |
+| **11. 补充知识** | [无限循环与 Predicate](./docs/infinite-loop-and-predicates.md) | `cmd/WithEventFilter-predicate/` | ✅ 已完成 |
 
 ---
 

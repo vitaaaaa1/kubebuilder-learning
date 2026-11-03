@@ -1,0 +1,97 @@
+# ============================================================
+# 🎯 ValidatingWebhookConfiguration：保护 /status 子资源
+# ============================================================
+#
+# 这个配置告诉 API Server：
+#   "当有人更新 scalableapps/status 时，先调用我的 Webhook 校验"
+#
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: scalableapp-status-validator
+webhooks:
+  - name: validate-status.scalableapp.demo.vitaaaaa.icu
+    # 🎯 核心：只拦截 /status 写入
+    rules:
+      - apiGroups: ["demo.vitaaaaa.icu"]
+        apiVersions: ["v1alpha1"]
+        resources: ["scalableapps/status"]   # ← 只校验 status 子资源
+        operations: ["UPDATE"]               # ← 拦截更新操作
+    # Webhook 服务配置
+    clientConfig:
+      service:
+        name: scalableapp-webhook-svc    # 你的 Webhook Server Service 名称
+        namespace: test                   # 你的 Webhook Server 所在命名空间
+        path: /validate-status            # 必须和代码中 Register() 的路径一致
+        port: 443
+      # CA 证书（必须和 Webhook Server 的 TLS 证书匹配）
+      # 生成方式：见 cert/ 目录的生成脚本
+      caBundle: ""  # 部署时需要填入实际的 CA Base64
+    # 失败策略：如果 Webhook 不可用，拒绝写入（安全优先）
+    failurePolicy: Fail
+    # 匹配策略：完全匹配
+    matchPolicy: Exact
+    # 超时：5 秒
+    timeoutSeconds: 5
+    # 不拦截 system 命名空间（避免死锁）
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values: ["kube-system"]
+---
+# ============================================================
+# Webhook Server 的 Deployment 和 Service
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scalableapp-webhook
+  namespace: test
+  labels:
+    app: scalableapp-webhook
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scalableapp-webhook
+  template:
+    metadata:
+      labels:
+        app: scalableapp-webhook
+    spec:
+      containers:
+        - name: webhook
+          image: scalableapp-webhook:latest  # 构建后替换
+          ports:
+            - containerPort: 9443
+              name: webhook
+          volumeMounts:
+            - name: certs
+              mountPath: /tmp/k8s-webhook-server/serving-certs
+              readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+      volumes:
+        - name: certs
+          secret:
+            secretName: scalableapp-webhook-certs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scalableapp-webhook-svc
+  namespace: test
+spec:
+  selector:
+    app: scalableapp-webhook
+  ports:
+    - port: 443
+      targetPort: 9443
+      protocol: TCP
+      name: webhook
