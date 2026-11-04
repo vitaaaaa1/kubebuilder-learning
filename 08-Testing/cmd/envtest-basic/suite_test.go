@@ -7,6 +7,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -24,6 +25,10 @@ var (
 	// 那时才会遇到"缓存读旧值"的问题。
 	k8sClient client.Client
 	apiReader client.Reader
+
+	// testCfg 是 envtest 起出来的 apiserver 的 rest.Config。
+	// 04 小节要自己 NewManager，所以必须把它从 TestMain 里的局部变量提升为包级变量。
+	testCfg *rest.Config
 
 	// testEnv 持有 etcd + kube-apiserver 两个子进程的生命周期。
 	testEnv *envtest.Environment
@@ -61,6 +66,8 @@ func TestMain(m *testing.M) {
 		fmt.Fprintln(os.Stderr, "提示：先 make setup-envtest && make envtest 准备二进制。")
 		os.Exit(1)
 	}
+
+	testCfg = cfg
 
 	testScheme = runtime.NewScheme()
 	if err := clientgoscheme.AddToScheme(testScheme); err != nil {

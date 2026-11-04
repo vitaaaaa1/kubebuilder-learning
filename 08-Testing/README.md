@@ -16,52 +16,60 @@
 ## 快速开始
 
 ```bash
-cd 08-Testing
+cd 08-Testing/src/00-get-branch-envtest
 
-make setup-envtest   # 装 setup-envtest 工具（一次性）
-make envtest         # 下载 etcd / kube-apiserver（约 120MB，一次性）
-make test            # 跑全部测试，自动注入 KUBEBUILDER_ASSETS
+make setup        # 一次性：装 setup-envtest + 下载 etcd / kube-apiserver（约 165MB）
+make test-simple  # 每次：跑测试
 ```
 
-只想跑某一类：
+`cmd/` 下的旧示例没有 Makefile 入口，需要时直接 `go test`：
 
 ```bash
-# 只跑 fake client 的反例（不需要任何二进制，0.1 秒）
-make test-fake
+# fake 版，不需要任何二进制
+go test ./cmd/get-branch -v
 
-# 只跑 envtest（需要二进制）
-make test-env
+# 真 apiserver 版，需要 KUBEBUILDER_ASSETS
+KUBEBUILDER_ASSETS="$(src/bin/setup-envtest use 1.31.x -p path)" \
+  go test ./cmd/envtest-basic -v
 ```
 
 ## 目录
 
 ```text
 08-Testing/
-├── Makefile
-├── docs/                             # 所有笔记集中在这里
-│   ├── 01-fake-client-syntax.md      # 三行初始化的语法拆解（零基础从这里进）
-│   └── 02-three-test-layers.md       # 三层测试的边界：谁能测什么、谁测不了什么
-└── cmd/
-    ├── get-branch/                   # 最小沙盒：只保留 Get 失败这一个分支
-    │   ├── reconciler.go             # 27 行，只有 Get 分支
-    │   └── reconciler_test.go        # 第 1 步：NotFound → nil
-    └── envtest-basic/                # 完整版：fake 反例 + envtest 真断言
-        ├── controller.go             # 被测对象：ConfigMap → 派生 Secret
-        ├── fake_test.go              # 反例集：fake 能测什么、不能测什么
-        ├── suite_test.go             # envtest 生命周期（TestMain）
-        └── env_test.go               # 真断言：ownerRef / 幂等 / 自愈 / NotFound / 无 GC
+├── src/                              # ⭐ 两个递进的沙盒（从这里开始）
+│   ├── README.md                     # 00 与 01 的定位对照 + 踩坑清单
+│   ├── 00-get-branch-envtest/        #   最小调用：一条测试怎么跑起来
+│   │   ├── Makefile                  #   make setup / make test-simple
+│   │   ├── README.md                 #   七层完整链路
+│   │   ├── reconciler.go             #   被测对象：Get + IgnoreNotFound
+│   │   ├── suite_test.go             #   TestMain：起 etcd + apiserver
+│   │   └── env_test.go               #   一条用例
+│   └── 01-get-branch-envtest/        #   在最小调用上加日志 / 错误 dump / UID
+│       ├── reconciler.go             #   多两行日志
+│       ├── suite_test.go
+│       └── env_test.go               #   三条用例 + dumpK8sError
+├── docs/                             # 章节级笔记
+│   ├── 01-fake-client-syntax.md
+│   ├── 02-three-test-layers.md
+│   └── 03-table-driven.md
+└── cmd/                              # 早期示例（保留，作为对照）
+    ├── get-branch/                   #   fake 版：同一个 Reconcile
+    └── envtest-basic/                #   完整版：ownerRef / 幂等 / 自愈 / 无 GC
 ```
 
 **推荐顺序**（从零开始的话）：
 
-1. `docs/01-fake-client-syntax.md` —— 先懂那三行初始化
-2. `cmd/get-branch/reconciler_test.go` —— 再读懂一条最小测试
-3. `docs/02-three-test-layers.md` —— 知道 fake 的边界在哪
-4. `cmd/envtest-basic/` —— 最后看完整的 7 条断言
+1. `src/README.md` —— 先看清 00 和 01 各学什么
+2. `src/00-get-branch-envtest/README.md` —— 再拆一条测试的七层链路
+3. `docs/01-fake-client-syntax.md` —— 再懂那三行初始化
+4. `cmd/get-branch/reconciler_test.go` —— 读懂一条最小测试
+5. `docs/02-three-test-layers.md` —— 知道 fake 的边界在哪
+6. `cmd/envtest-basic/` —— 最后看完整的 7 条断言
 
 ## 验收清单
 
-跑完 `make test` 后，你应该能回答：
+跑完 `00-get-branch-envtest` 和 `cmd/envtest-basic` 后，你应该能回答：
 
 - [ ] 为什么 fake client 下 ownerReference 看起来正常、实际却用不了？
 - [ ] 为什么"幂等"用 ResourceVersion 判断，而不是"再调一次看有没有报错"？
