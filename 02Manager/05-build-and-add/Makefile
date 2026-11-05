@@ -1,6 +1,6 @@
 # 05-build-and-add · Complete() 拆解
 
-.PHONY: run run-builder run-no-watch step1 step2 step3 compare-manual compare-builder demo clean-demo
+.PHONY: run run-builder run-no-watch step1 step2 step3 compare-manual compare-builder compare-split demo clean-demo
 
 run: ## 手动装配 controller.New + Watch
 	go run .
@@ -25,6 +25,9 @@ compare-manual: ## 严格对照：手动装配
 
 compare-builder: ## 严格对照：Builder 装配
 	go run ./compare/builder
+
+compare-split: ## 拆分 NewManager：手动组装四个部件
+	go run ./compare/split-manager
 
 demo: ## 触发一次事件
 	kubectl create configmap demo-cm -n test \

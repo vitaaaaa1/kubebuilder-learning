@@ -16,7 +16,7 @@ Build(r)
   └── doController(r) → controller.New(name, mgr, options) → mgr.Add(controller)
 ```
 
-## 五份代码
+## 六份代码
 
 | 目录 | 写法 | 目的 |
 |---|---|---|
@@ -24,7 +24,8 @@ Build(r)
 | `./builder` | `For(...).Complete(...)` | 自动做同样两件事 |
 | `./no-watch` | 只 `controller.New`，不 Watch | 反例：控制器空转 |
 | `./steps` | 用 `-mode` 切换三个步骤 | 同一条链路，逐级观察每一步的作用 |
-| **`./compare`** | `manual/` 与 `builder/` 双份 | **除装配段外完全相同，严格对照** |
+| `./compare/manual` `./compare/builder` | 双份对照 | 除装配段外完全相同，严格对照 |
+| **`./compare/split-manager`** | 手动组装 `NewManager` 内部 | **拆开看 Manager 到底建了什么** |
 
 运行：
 
@@ -102,6 +103,84 @@ INFO Reconcile 被调用     {"controller":"demo-configmap","controllerGroup":""
 | 生成 log constructor | ❌ | ✅ |
 | 校验（nil reconciler / 重复 For） | ❌ | ✅ `Build` 时检查 |
 | 支持 predicate / Owns / Watches | 手写 | 现成 |
+
+## 拆分 `NewManager`：手动组装四个部件
+
+`compare/split-manager/main.go` 不用 `ctrl.NewManager`，而是自己做它内部做的事：
+
+```go
+httpClient, _ := rest.HTTPClientFor(cfg)
+mapper, _     := apiutil.NewDynamicRESTMapper(cfg, httpClient)
+
+cmCache, _ := cache.New(cfg, cache.Options{
+	Scheme: scheme, Mapper: mapper, HTTPClient: httpClient,
+	DefaultNamespaces: map[string]cache.Config{"test": {}},
+})
+
+cachedClient, _ := client.New(cfg, client.Options{          // = mgr.GetClient()
+	Scheme: scheme, Mapper: mapper, HTTPClient: httpClient,
+	Cache: &client.CacheOptions{Reader: cmCache},
+})
+
+apiReader, _ := client.New(cfg, client.Options{             // = mgr.GetAPIReader()
+	Scheme: scheme, Mapper: mapper, HTTPClient: httpClient,
+})
+```
+
+然后是 Manager 不会替你做的最后一步——**启动缓存**：
+
+```go
+informer, _ := cmCache.GetInformer(ctx, &corev1.ConfigMap{})
+informer.AddEventHandler(toolscache.ResourceEventHandlerFuncs{...})
+
+go cmCache.Start(ctx)
+cmCache.WaitForCacheSync(ctx)
+```
+
+### 实测输出
+
+```text
+13:53:41  INFO setup  【1/4】RESTMapper 就绪
+13:53:41  INFO setup  【2/4】Cache 就绪（尚未 Start）
+13:53:41  INFO setup  【3/4】CachedClient + APIReader 就绪
+13:53:41  INFO setup  【4/4】Informer 与 Handler 就绪
+13:53:41  INFO setup  informer: Add  {"name": "demo-config"}
+13:53:41  INFO setup  informer: Add  {"name": "kube-root-ca.crt"}
+13:53:41  INFO setup  缓存已同步（这一步在 Manager 里由 Start 自动完成）
+13:53:41  INFO setup  cachedClient 读到  {"count": 2}
+13:53:41  INFO setup  apiReader 读到     {"count": 119}
+13:53:59  INFO setup  informer: Add     {"name": "demo-split"}
+13:54:03  INFO setup  informer: Update  {"name": "demo-split"}
+13:54:06  INFO setup  informer: Delete  {"name": "demo-split"}
+```
+
+### 一个重要发现：`apiReader` 不受 `DefaultNamespaces` 限制
+
+```text
+cachedClient 读到 2     ← 缓存只包含 test 命名空间
+apiReader    读到 119   ← 直连整个集群，所有命名空间
+```
+
+`Cache.DefaultNamespaces` 只约束**缓存**。`GetAPIReader()` 和所有写操作都是直连，
+不受缓存范围影响。
+
+### Manager 替你做了什么
+
+| 动作 | 手动（split-manager） | `ctrl.NewManager` |
+|---|---|---|
+| 建 mapper / cache / client ×2 | ✅ 自己写 | ✅ |
+| 启动缓存 | `go cmCache.Start(ctx)` | `mgr.Start(ctx)` |
+| 等缓存同步 | `WaitForCacheSync` | 自动（控制器启动前） |
+| 事件 → 队列 → worker | ❌ 只有 informer 回调 | ✅ Controller |
+| Leader Election | ❌ | ✅ |
+| Metrics / Healthz / Pprof | ❌ | ✅ |
+| 优雅关闭 | ❌ 自己处理 ctx | ✅ |
+| 组件统一生命周期 | ❌ | ✅ |
+
+一句话：
+
+> **`NewManager` = 这四件套 + 生命周期 + 6 组 runnables。**
+> 拆开之后你能看到“缓存必须显式启动”，也就能理解为什么 `mgr.Start` 之后才有事件。
 
 ## 分解演示：每一步各管什么
 
