@@ -53,3 +53,26 @@ Manager 是 `controller-runtime` 的心脏，它不仅仅是启动 Controller �
 3.  **就绪检查**：缓存同步完成后，`/readyz` 接口返回 200 OK。
 4.  **启动 Controller**：通知所有 Controller 开始处理 WorkQueue 中的事件。
 5.  **阻塞**：进程进入阻塞状态，直到收到 `ctx.Done()` 信号。
+
+## 4. 深入阅读：拆解实验
+
+上面是结论，下面两个目录是“自己动手复刻一遍”的实验，配套总结见
+[`docs/newmanager-to-client.md`](docs/newmanager-to-client.md)。
+
+| 目录 | 内容 | 对照 |
+|---|---|---|
+| `06-manager-anatomy/` | 拆开 `ctrl.NewManager` | `with-manager/`（一句 NewManager） vs `manual/`（手写 mapper/cache/client） |
+| `07-client-anatomy/` | 拆开 `client.New` | `with-client/`（client.New） vs `manual/`（直接 `rest.RESTClient`） |
+| `05-build-and-add/compare/split-manager/` | 不含 Manager 的最小可读链路 | informer 回调 + 缓存启动 |
+
+实测结论速览：
+
+*   `NewManager` 完成耗时 ~450µs，**不发任何网络请求**，唯一副作用是绑定 metrics/healthz/pprof 端口。
+*   `apiReader` 读到 119 个 ConfigMap（全集群），`cachedClient` 读到 2 个（仅 `test`）。
+*   `cachedClient` 在缓存未启动时读会报 `the cache is not started`，但写操作（直连）成功。
+*   `WaitForCacheSync` 只等“已注册”的 informer；未注册的类型在首次访问时才创建并阻塞同步。
+
+```bash
+cd 06-manager-anatomy && make both     # NewManager vs 手动组装
+cd 07-client-anatomy  && make both     # client.New vs rest.RESTClient
+```
