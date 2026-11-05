@@ -37,7 +37,7 @@ KUBEBUILDER_ASSETS="$(src/bin/setup-envtest use 1.31.x -p path)" \
 
 ```text
 08-Testing/
-├── src/                              # ⭐ 两个递进的沙盒（从这里开始）
+├── src/                              # ⭐ 三个递进的沙盒（从这里开始）
 │   ├── README.md                     # 00 与 01 的定位对照 + 踩坑清单
 │   ├── 00-get-branch-envtest/        #   最小调用：一条测试怎么跑起来
 │   │   ├── Makefile                  #   make setup / make test-simple
@@ -45,10 +45,13 @@ KUBEBUILDER_ASSETS="$(src/bin/setup-envtest use 1.31.x -p path)" \
 │   │   ├── reconciler.go             #   被测对象：Get + IgnoreNotFound
 │   │   ├── suite_test.go             #   TestMain：起 etcd + apiserver
 │   │   └── env_test.go               #   一条用例
-│   └── 01-get-branch-envtest/        #   在最小调用上加日志 / 错误 dump / UID
-│       ├── reconciler.go             #   多两行日志
-│       ├── suite_test.go
-│       └── env_test.go               #   三条用例 + dumpK8sError
+│   ├── 01-get-branch-envtest/        #   在最小调用上加日志 / 错误 dump / UID
+│   │   ├── reconciler.go             #   多两行日志
+│   │   ├── suite_test.go
+│   │   └── env_test.go               #   三条用例 + dumpK8sError
+│   └── 02-manager-and-cache/         #   Manager 与缓存：速度 / 滞后 / apiReader
+│       ├── suite_test.go             #   起 Manager + 等缓存同步
+│       └── cache_test.go             #   三个实验
 ├── docs/                             # 章节级笔记
 │   ├── 01-fake-client-syntax.md
 │   ├── 02-three-test-layers.md

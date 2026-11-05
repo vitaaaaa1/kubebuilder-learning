@@ -1,14 +1,15 @@
-# src/：两个递进的 envtest 沙盒
+# src/：三个递进的 envtest 沙盒
 
-这里放"同一个被测对象、两种学习目标"的两个目录。**00 打地基，01 加逻辑**。
+这里放三个逐步加码的沙盒。**00 打地基，01 加观测，02 加时序**。
 
 ```text
 src/
 ├── 00-get-branch-envtest/     # 最小调用：只证明"测试能跑起来"
-└── 01-get-branch-envtest/     # 在最小调用上加日志、加错误 dump、加 UID 观察
+├── 01-get-branch-envtest/     # 加日志、加错误 dump、加 UID 观察
+└── 02-manager-and-cache/      # Manager 与缓存：读快 400 倍，但会滞后
 ```
 
-两者共用同一个包名 `getbranchenvtest`，但**是两个独立的包**（不同目录），互不引用。
+前两个目录共用同一个包名 `getbranchenvtest`，第三个是独立的包 `managercache`；**三者互不引用**，各跑各的。
 
 ---
 
@@ -191,15 +192,59 @@ ok  .../01-get-branch-envtest  3.9s
 
 ---
 
+## 02-manager-and-cache —— 缓存不是透明的
+
+### 目的
+
+回答一个让无数测试"偶发失败"的问题：**为什么刚创建的对象，用控制器里的 client 读不到？**
+
+### 与 00/01 的唯一区别
+
+`TestMain` 里多了一个 Manager：
+
+```go
+mgr, _ := ctrl.NewManager(cfg, ctrl.Options{Scheme: testScheme})
+go mgr.Start(ctx)
+mgr.GetCache().WaitForCacheSync(ctx)
+
+cachedClient = mgr.GetClient()    // 读 → 缓存
+apiReader    = mgr.GetAPIReader() // 读 → apiserver
+```
+
+### 三个实验（真实数据）
+
+| 实验 | 结果 |
+|---|---|
+| A. 速度 | 缓存 `517–675 ns` vs 直连 `265–289 µs` → **392–558 倍** |
+| B. 滞后 | 20 次"Create 后立刻缓存读"，**1–3 次 NotFound**；缓存追上耗时 `125–143 µs` |
+| C. 证明 | 同一瞬间 `apiReader` 读：**20/20 立即可见** |
+
+### 结论
+
+```text
+Create 返回  ≠  缓存已更新
+Create 返回  =  数据已在 etcd
+```
+
+- **写后立刻读** → `apiReader` 或 `Eventually`
+- **普通读** → 用缓存（快 400 倍）
+- fake client 是同步 map，**永远复现不出**这两种现象
+
+> 细节、`Eventually` 写法、自测题见 [02-manager-and-cache/README.md](02-manager-and-cache/README.md)。
+
+---
+
 ## 对照表
 
-| | 00 | 01 |
-|---|---|---|
-| 目标 | 看懂"测试怎么跑起来" | 练习日志、错误、身份 |
-| 被测逻辑 | Get + IgnoreNotFound | 同上 + 两行日志 |
-| 用例数 | 1 | 3 |
-| 辅助函数 | 无 | `dumpK8sError` |
-| 建议顺序 | **先看** | 再看 |
+| | 00 | 01 | 02 |
+|---|---|---|---|
+| 目标 | 测试怎么跑起来 | 日志、错误、身份 | 缓存与一致性 |
+| client | 直连 | 直连 | **Manager 缓存 + apiReader** |
+| 用例数 | 1 | 3 | 3 |
+| 辅助代码 | 无 | `dumpK8sError` | 三个 client |
+| 建议顺序 | 先看 | 再看 | 最后 |
+
+**02 是分界线**：从这里开始，测试要考虑"时序"，而不只是"结果"。
 
 ---
 
@@ -220,9 +265,9 @@ ok  .../01-get-branch-envtest  3.9s
 
 | 方向 | 放在哪 | 涉及知识点 |
 |---|---|---|
-| 表驱动版 | 01 | `t.Run`、`-run` 过滤 |
-| Manager + 缓存 | 新建 02 | `mgr.GetClient()` vs `GetAPIReader()` |
 | CRD 进 envtest | 新建 03 | `CRDDirectoryPaths`、`AddToScheme` |
 | Webhook | 新建 04 | `WebhookInstallOptions`、TLS |
+| `Eventually` 实战 | 01 或新目录 | 写后读的断言怎么写稳 |
+| 表驱动版 | 01 | `t.Run`、`-run` 过滤 |
 
 **建议**：每加一个，复制一个目录、改包名、只动一个变量（比如 client 的构造方式），这样差异一眼可见。
