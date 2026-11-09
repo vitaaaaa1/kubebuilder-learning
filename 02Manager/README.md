@@ -56,13 +56,19 @@ Manager 是 `controller-runtime` 的心脏，它不仅仅是启动 Controller �
 
 ## 4. 深入阅读：拆解实验
 
-上面是结论，下面两个目录是“自己动手复刻一遍”的实验，配套总结见
-[`docs/newmanager-to-client.md`](docs/newmanager-to-client.md)。
+上面是结论，下面这些目录是“自己动手复刻一遍”的实验：
+
+*   Manager 到 Client 的拆解：[`docs/newmanager-to-client.md`](docs/newmanager-to-client.md)
+*   Controller 装配的拆解：[`docs/newcontroller-managed-by.md`](docs/newcontroller-managed-by.md)
 
 | 目录 | 内容 | 对照 |
 |---|---|---|
 | `06-manager-anatomy/` | 拆开 `ctrl.NewManager` | `with-manager/`（一句 NewManager） vs `manual/`（手写 mapper/cache/client） |
 | `07-client-anatomy/` | 拆开 `client.New` | `with-client/`（client.New） vs `manual/`（直接 `rest.RESTClient`） |
+| `08-manager-runnables/` | Manager 的 6 组 runnables | 启动/停止顺序、优雅关闭超时 |
+| `09-controller-builder/` | 拆开 `NewControllerManagedBy` | `with-builder/`（一行装配） vs `manual/`（五步手写） |
+| `10-multi-controller/` | 一个 Manager 挂多个 Controller | ConfigMap 与 Secret 各自独立 |
+| `11-controller-watch/` | 拆开 `c.Watch(src)` | `with-source/`（KindSource） vs `custom-source/`（自定义 Source） |
 | `05-build-and-add/compare/split-manager/` | 不含 Manager 的最小可读链路 | informer 回调 + 缓存启动 |
 
 实测结论速览：
