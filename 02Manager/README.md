@@ -69,6 +69,9 @@ Manager 是 `controller-runtime` 的心脏，它不仅仅是启动 Controller �
 | `09-controller-builder/` | 拆开 `NewControllerManagedBy` | `with-builder/`（一行装配） vs `manual/`（五步手写） |
 | `10-multi-controller/` | 一个 Manager 挂多个 Controller | ConfigMap 与 Secret 各自独立 |
 | `11-controller-watch/` | 拆开 `c.Watch(src)` | `with-source/`（KindSource） vs `custom-source/`（自定义 Source） |
+| `12-controller-new/` | 拆开 `controller.New`：队列 + worker + 重试 | `with-controller/`（内置循环） vs `manual-worker/`（手写循环） |
+| `13-conflict-retry/` | 并发写冲突与 `RetryOnConflict` | `naive/`（冲突即失败） vs `with-retry/`（重读重写） |
+| `14-reconcile-dispatch/` | Reconcile 调度参数 | `-mode quiet/after/error/panic/parallel` |
 | `05-build-and-add/compare/split-manager/` | 不含 Manager 的最小可读链路 | informer 回调 + 缓存启动 |
 
 实测结论速览：
