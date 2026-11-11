@@ -1,245 +1,135 @@
 # kubebuilder-learning
+// TODO(user): Add simple overview of use/purpose
 
-本项目用于学习 Kubernetes Operator 开发，基于 [kubebuilder](https://book.kubebuilder.io/) 框架。
+## Description
+// TODO(user): An in-depth paragraph about your project and overview of use
 
-## 项目信息
+## Getting Started
 
-- **Domain**: `vitaaaaa.icu`
-- **Go Module**: `github.com/vitaaaaa/kubebuilder-learning`
-- **Kubebuilder Version**: 4.16.0
-- **Layout**: `go.kubebuilder.io/v4`
-- **Go Version**: 1.26.0
+### Prerequisites
+- go version v1.24.6+
+- docker version 17.03+.
+- kubectl version v1.11.3+.
+- Access to a Kubernetes v1.11.3+ cluster.
 
-## 目录结构
+### To Deploy on the cluster
+**Build and push your image to the location specified by `IMG`:**
 
-```
-├── cmd/
-│   └── main.go              # 控制器入口，启动 manager
-├── config/                  # Kubernetes 资源配置（kustomize）
-│   ├── default/             # 默认 kustomize 配置
-│   ├── manager/             # Controller Deployment 配置
-│   ├── network-policy/      # 网络策略
-│   ├── prometheus/          # Prometheus 监控配置
-│   └── rbac/                # RBAC 角色和权限配置
-├── hack/                    # 辅助脚本
-├── test/                    # 测试代码
-├── PROJECT                  # kubebuilder 项目元数据（自动生成）
-├── Makefile                 # 构建、部署、测试命令
-├── Dockerfile               # 容器镜像构建文件
-├── go.mod                   # Go 依赖管理
-└── README.md                # 项目说明文档
+```sh
+make docker-build docker-push IMG=<some-registry>/kubebuilder-learning:tag
 ```
 
-## 命令详解
+**NOTE:** This image ought to be published in the personal registry you specified.
+And it is required to have access to pull the image from the working environment.
+Make sure you have the proper permission to the registry if the above commands don’t work.
 
-### kubebuilder init
+**Install the CRDs into the cluster:**
 
-```bash
-kubebuilder init --domain vitaaaaa.icu --repo github.com/vitaaaaa/kubebuilder-learning
-```
-
-**参数解释：**
-
-| 参数 | 值 | 作用 |
-|------|-----|------|
-| `--domain` | `vitaaaaa.icu` | 设置 API group 的基础域名 |
-| `--repo` | `github.com/vitaaaaa/kubebuilder-learning` | 设置 Go module 路径 |
-
-**`--domain` 的作用：**
-
-将来创建 API 时，CRD 的完整 group 会是 `<group>.<domain>`。
-
-比如创建了 `--group demo` 的 API，最终的 API group 就是：
-```yaml
-apiVersion: demo.vitaaaaa.icu/v1alpha1
-kind: HelloWorld
-```
-
-**`--repo` 的作用：**
-
-- 设置 `go.mod` 中的 module 名称
-- 决定所有 import 路径的前缀
-- 通常与 Git 仓库路径一致
-
-```go
-// import 路径示例
-import (
-    demoapiv1alpha1 "github.com/vitaaaaa/kubebuilder-learning/api/v1alpha1"
-)
-```
-
-**init 做了什么？**
-
-1. 生成 `PROJECT` 文件（记录项目元信息）
-2. 生成 `Makefile`（构建、部署命令）
-3. 生成 `go.mod`（Go module 配置）
-4. 生成 `cmd/main.go`（controller 入口）
-5. 生成 `config/` 目录（kustomize 配置）
-6. 生成 `Dockerfile`
-7. 初始化 Go 代码框架
-
----
-
-### kubebuilder create api
-
-```bash
-kubebuilder create api --group demo --version v1alpha1 --kind HelloWorld
-```
-
-**参数解释：**
-
-| 参数 | 值 | 作用 |
-|------|-----|------|
-| `--group` | `demo` | API group 名称 |
-| `--version` | `v1alpha1` | API 版本 |
-| `--kind` | `HelloWorld` | 资源类型名称 |
-
-**三个参数共同定义了 CRD 的身份：**
-
-```yaml
-apiVersion: <group>.<domain>/<version>
-kind: <Kind>
-
-# 实际效果：
-apiVersion: demo.vitaaaaa.icu/v1alpha1
-kind: HelloWorld
-```
-
-**`--group`（API group）**
-- 逻辑上相关的 API 的分组
-- 类似于 Kubernetes 内置的 `apps`、`batch`、`networking.k8s.io`
-- 通常用项目/团队/功能名命名
-
-**`--version`（API version）**
-- 表示 API 的成熟度
-- 常见版本：`v1alpha1`（实验性）、`v1beta1`（较稳定）、`v1`（稳定）
-
-**`--kind`（资源类型）**
-- 资源的名称，必须大写字母开头
-- 使用 PascalCase（驼峰命名）
-- 类似于内置的 `Pod`、`Deployment`、`Service`
-
-**create api 做了什么？（两个问题都选 y）**
-
-1. **生成 API 类型定义**：`api/v1alpha1/helloworld_types.go`
-   - `HelloWorld` 结构体
-   - `HelloWorldSpec`（Spec 定义）
-   - `HelloWorldStatus`（Status 定义）
-
-2. **生成 Controller 骨架**：`internal/controller/helloworld_controller.go`
-   - `HelloWorldReconciler` 结构体
-   - `Reconcile()` 方法（你需要实现业务逻辑）
-   - `SetupWithManager()` 方法
-
-3. **生成测试文件**：
-   - `internal/controller/helloworld_controller_test.go`
-   - `internal/controller/suite_test.go`
-
-4. **生成 kustomize 配置**：
-   - `config/crd/` 目录
-   - `config/rbac/` 目录
-   - `config/samples/` 目录（包含示例 CR）
-
-5. **注册 API**：
-   - 在 `api/v1alpha1/groupversion_info.go` 中注册 group/version
-   - 在 `cmd/main.go` 中添加对 API 的引用
-
----
-
-### 其他常用 create 命令
-
-**只创建 Controller（不创建新 API）**
-```bash
-kubebuilder create api --group demo --version v1alpha1 --kind AnotherResource --controller=true --resource=false
-```
-
-**只创建 Resource（不创建 Controller）**
-```bash
-kubebuilder create api --group demo --version v1alpha1 --kind AnotherResource --controller=false --resource=true
-```
-
-**创建 Webhook**
-```bash
-kubebuilder create webhook --group demo --version v1alpha1 --kind HelloWorld --defaulting --programmatic-validation
-```
-
-## 常用命令
-
-### 安装 CRD 到集群
-
-```bash
+```sh
 make install
 ```
 
-### 本地运行控制器
+**Deploy the Manager to the cluster with the image specified by `IMG`:**
 
-```bash
-make run
+```sh
+make deploy IMG=<some-registry>/kubebuilder-learning:tag
 ```
 
-### 构建并部署到集群
+> **NOTE**: If you encounter RBAC errors, you may need to grant yourself cluster-admin
+privileges or be logged in as admin.
 
-```bash
-make docker-build docker-push IMG=<your-registry>/<your-image>:<tag>
-make deploy IMG=<your-registry>/<your-image>:<tag>
+**Create instances of your solution**
+You can apply the samples (examples) from the config/sample:
+
+```sh
+kubectl apply -k config/samples/
 ```
 
-### 运行测试
+>**NOTE**: Ensure that the samples has default values to test it out.
 
-```bash
-make test
+### To Uninstall
+**Delete the instances (CRs) from the cluster:**
+
+```sh
+kubectl delete -k config/samples/
 ```
 
-### 生成 CRD manifests
+**Delete the APIs(CRDs) from the cluster:**
 
-```bash
-make manifests
+```sh
+make uninstall
 ```
 
-## 完整学习流程
+**UnDeploy the controller from the cluster:**
 
-```bash
-# 1. 初始化项目
-kubebuilder init --domain vitaaaaa.icu --repo github.com/vitaaaaa/kubebuilder-learning
-
-# 2. 创建第一个 API
-kubebuilder create api --group demo --version v1alpha1 --kind HelloWorld
-
-# 3. 编辑 api/v1alpha1/helloworld_types.go 定义 Spec 和 Status
-
-# 4. 编辑 internal/controller/helloworld_controller.go 实现 Reconcile 逻辑
-
-# 5. 生成 CRD manifests
-make manifests
-
-# 6. 安装 CRD 到集群
-make install
-
-# 7. 本地运行 controller
-make run
-
-# 8. 创建 HelloWorld 实例测试
-kubectl apply -f config/samples/demo_v1alpha1_helloworld.yaml
+```sh
+make undeploy
 ```
 
-## 学习路径
+## Project Distribution
 
-- [ ] 项目初始化（已完成）
-- [ ] 创建第一个 CRD API
-- [ ] 定义 Spec 和 Status
-- [ ] 实现 Controller Reconcile 逻辑
-- [ ] 本地测试和调试
-- [ ] 部署到 Kubernetes 集群
+Following the options to release and provide this solution to the users.
 
-## 核心依赖
+### By providing a bundle with all YAML files
 
-- `sigs.k8s.io/controller-runtime`: Kubernetes controller 核心运行时库
-- `k8s.io/apimachinery`: Kubernetes API 对象类型
-- `k8s.io/client-go`: Kubernetes API 客户端
-- `github.com/onsi/ginkgo/v2`: BDD 测试框架
+1. Build the installer for the image built and published in the registry:
 
-## 参考资源
+```sh
+make build-installer IMG=<some-registry>/kubebuilder-learning:tag
+```
 
-- [Kubebuilder Book](https://book.kubebuilder.io/)
-- [Controller Runtime Docs](https://pkg.go.dev/sigs.k8s.io/controller-runtime)
-- [Kubernetes API Reference](https://kubernetes.io/docs/reference/)
+**NOTE:** The makefile target mentioned above generates an 'install.yaml'
+file in the dist directory. This file contains all the resources built
+with Kustomize, which are necessary to install this project without its
+dependencies.
+
+2. Using the installer
+
+Users can just run 'kubectl apply -f <URL for YAML BUNDLE>' to install
+the project, i.e.:
+
+```sh
+kubectl apply -f https://raw.githubusercontent.com/<org>/kubebuilder-learning/<tag or branch>/dist/install.yaml
+```
+
+### By providing a Helm Chart
+
+1. Build the chart using the optional helm plugin
+
+```sh
+kubebuilder edit --plugins=helm/v2-alpha
+```
+
+2. See that a chart was generated under 'dist/chart', and users
+can obtain this solution from there.
+
+**NOTE:** If you change the project, you need to update the Helm Chart
+using the same command above to sync the latest changes. Furthermore,
+if you create webhooks, you need to use the above command with
+the '--force' flag and manually ensure that any custom configuration
+previously added to 'dist/chart/values.yaml' or 'dist/chart/manager/manager.yaml'
+is manually re-applied afterwards.
+
+## Contributing
+// TODO(user): Add detailed information on how you would like others to contribute to this project
+
+**NOTE:** Run `make help` for more information on all potential `make` targets
+
+More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
+
+## License
+
+Copyright 2026.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+

@@ -1,4 +1,4 @@
-module github.com/vitaaaaa/kubebuilder-learning
+module github.com/vitaaaaa1/kubebuilder-learning
 
 go 1.26.0
 
